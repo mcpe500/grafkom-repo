@@ -29,29 +29,26 @@
             if (coord1 == null) {
                 coord1 = [x, y]
             } else {
-        const canvas = document.querySelector(".board")
-        let coord1 = null
-        let coord2 = null
-        canvas.addEventListener('click', (event) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            if (coord1 == null) {
-                coord1 = [x, y]
-            } else {
-                coord2 = [x, y]
+                coord2 = [x, y];
                 const ctx = canvas.getContext('2d');
-                
-                ctx.beginPath();
-                for (let i = 0; i < array.length; i++) {
+
+                // DDA line drawing algorithm
+                let dx = coord2[0] - coord1[0];
+                let dy = coord2[1] - coord1[1];
+                let steps = Math.abs(dx) > Math.abs(dy) ? Math.abs(dx) : Math.abs(dy);
+                let Xinc = dx / steps;
+                let Yinc = dy / steps;
+                let X = coord1[0];
+                let Y = coord1[1];
+                ctx.fillStyle = 'black'; // Change this to the color you want
+                for (let i = 0; i <= steps; i++) {
+                    ctx.fillRect(Math.round(X), Math.round(Y), 1, 1); // Set a pixel
+                    X += Xinc;
+                    Y += Yinc;
                 }
-                ctx.moveTo(coord1[0], coord1[1]);
-                ctx.lineTo(coord2[0], coord2[1]);
-                ctx.stroke();
-                coord1 = null
-                coord2 = null
-            }
-        })
+
+                coord1 = null;
+                coord2 = null;
             }
         })
     </script>
