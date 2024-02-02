@@ -31,8 +31,6 @@
             } else {
                 coord2 = [x, y];
                 const ctx = canvas.getContext('2d');
-
-                // DDA line drawing algorithm
                 let dx = coord2[0] - coord1[0];
                 let dy = coord2[1] - coord1[1];
                 let steps = Math.abs(dx) > Math.abs(dy) ? Math.abs(dx) : Math.abs(dy);
@@ -40,9 +38,9 @@
                 let Yinc = dy / steps;
                 let X = coord1[0];
                 let Y = coord1[1];
-                ctx.fillStyle = 'black'; // Change this to the color you want
+                ctx.fillStyle = 'black';
                 for (let i = 0; i <= steps; i++) {
-                    ctx.fillRect(Math.round(X), Math.round(Y), 1, 1); // Set a pixel
+                    ctx.fillRect(Math.round(X), Math.round(Y), 1, 1);
                     X += Xinc;
                     Y += Yinc;
                 }
