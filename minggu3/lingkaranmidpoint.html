@@ -1,0 +1,44 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINGKARAN MIDPOINT MINGGU 3</title>
+    <style>
+        body {
+            background: #000;
+        }
+
+        canvas {
+            background: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas width="512px" height="512px" class="board"></canvas>
+    <script>
+        const canvas = document.querySelector(".board");
+        let coord1 = null;
+        let coord2 = null;
+
+        canvas.addEventListener('click', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor(event.clientX - rect.left);
+            const y = Math.floor(event.clientY - rect.top);
+
+            if (coord1 === null) {
+                coord1 = [x, y];
+            } else {
+                coord2 = [x, y];
+                
+                coord1 = null;
+                coord2 = null;
+            }
+        });
+    </script>
+</body>
+
+</html>
