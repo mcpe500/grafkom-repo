@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRESENHAM MINGGU 1</title>
+    <style>
+        body {
+            background: #000;
+        }
+
+        canvas {
+            background: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas width="512px" height="512px" class="board"></canvas>
+    <script>
+        const canvas = document.querySelector(".board");
+        let coord1 = null;
+        let coord2 = null;
+
+        canvas.addEventListener('click', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor(event.clientX - rect.left);
+            const y = Math.floor(event.clientY - rect.top);
+
+            if (coord1 === null) {
+                coord1 = [x, y];
+            } else {
+                coord2 = [x, y];
+                let x0 = coord1[0]
+                let y0 = coord1[1]
+                let x1 = coord2[0]
+                let y1 = coord2[1]
+
+                const ctx = canvas.getContext('2d');
+                const dx = Math.abs(x1 - x0);
+                const dy = Math.abs(y1 - y0);
+                const signX = x0 < x1 ? 1 : -1;
+                const signY = y0 < y1 ? 1 : -1;
+                let err = dx - dy;
+
+                ctx.fillStyle = 'black';
+                ctx.fillRect(x1, y1, 1, 1);
+
+                while (x0 !== x1 || y0 !== y1) {
+                    ctx.fillStyle = 'black';
+                    ctx.fillRect(x0, y0, 1, 1);
+                    const err2 = 2 * err;
+                    if (err2 > -dy) {
+                        err -= dy;
+                        x0 += signX;
+                    }
+                    if (err2 < dx) {
+                        err += dx;
+                        y0 += signY;
+                    }
+                }
+                coord1 = null;
+                coord2 = null;
+            }
+        });
+    </script>
+</body>
+
+</html>
