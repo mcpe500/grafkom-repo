@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -21,8 +20,36 @@
     <canvas width="512px" height="512px" class="board"></canvas>
     <script>
         const canvas = document.querySelector(".board");
+        const ctx = canvas.getContext('2d');
         let coord1 = null;
         let coord2 = null;
+
+        function drawCircle(xc, yc, x, y) {
+            ctx.fillRect(xc+x, yc+y, 1, 1);
+            ctx.fillRect(xc-x, yc+y, 1, 1);
+            ctx.fillRect(xc+x, yc-y, 1, 1);
+            ctx.fillRect(xc-x, yc-y, 1, 1);
+            ctx.fillRect(xc+y, yc+x, 1, 1);
+            ctx.fillRect(xc-y, yc+x, 1, 1);
+            ctx.fillRect(xc+y, yc-x, 1, 1);
+            ctx.fillRect(xc-y, yc-x, 1, 1);
+        }
+
+        function bresenhamCircle(xc, yc, r) {
+            let x = 0, y = r;
+            let d = 3 - 2 * r;
+            drawCircle(xc, yc, x, y);
+            while (y >= x) {
+                x++;
+
+                if (d > 0) {
+                    y--;
+                    d = d + 4 * (x - y) + 10;
+                } else
+                    d = d + 4 * x + 6;
+                drawCircle(xc, yc, x, y);
+            }
+        }
 
         canvas.addEventListener('click', (event) => {
             const rect = canvas.getBoundingClientRect();
@@ -33,7 +60,10 @@
                 coord1 = [x, y];
             } else {
                 coord2 = [x, y];
-                
+                let dx = coord2[0] - coord1[0];
+                let dy = coord2[1] - coord1[1];
+                let r = Math.sqrt(dx*dx + dy*dy);
+                bresenhamCircle(coord1[0], coord1[1], r);
                 coord1 = null;
                 coord2 = null;
             }
