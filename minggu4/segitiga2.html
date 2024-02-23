@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEGITIGA 2 MINGGU 4</title>
+    <style>
+        body {
+            background: #000;
+        }
+
+        canvas {
+            background: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas width="512px" height="512px" class="board"></canvas>
+    <input type="color" name="" id="color1" value="#ff0000">
+    <input type="color" name="" id="color2" value="#00ff00">
+    <input type="color" name="" id="color3" value="#0000ff">
+    <script>
+        const canvas = document.querySelector(".board")
+        let p1 = null
+        let p2 = null
+        let p3 = null
+        const color1 = document.getElementById("color1")
+        const color2 = document.getElementById("color2")
+        const color3 = document.getElementById("color3")
+        canvas.addEventListener('click', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const ctx = canvas.getContext('2d');
+            if (p1 == null) {
+                p1 = [x, y, color1.value]
+            } else if (p1 != null && p2 == null) {
+                p2 = [x, y, color2.value];
+            } else {
+                p3 = [x, y, color3.value]
+                // Draw the bounding box
+                const minX = Math.min(p1[0], p2[0], p3[0]);
+                const minY = Math.min(p1[1], p2[1], p3[1]);
+                const maxX = Math.max(p1[0], p2[0], p3[0]);
+                const maxY = Math.max(p1[1], p2[1], p3[1]);
+
+                // Calculate the normal vector of the plane
+                const v1 = [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]];
+                const v2 = [p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]];
+                const normal = [
+                    v1[1] * v2[2] - v1[2] * v2[1],
+                    v1[2] * v2[0] - v1[0] * v2[2],
+                    v1[0] * v2[1] - v1[1] * v2[0]
+                ];
+
+                // Calculate D in the plane equation ax+by+cz+d=0
+                const d = -(normal[0] * p1[0] + normal[1] * p1[1] + normal[2] * p1[2]);
+
+                // Check each pixel in the bounding box
+                for (let i = minX; i <= maxX; i++) {
+                    for (let j = minY; j <= maxY; j++) {
+                        // Check if the pixel is inside the triangle
+                        const b1 = sign([i, j], p1, p2) < 0;
+                        const b2 = sign([i, j], p2, p3) < 0;
+                        const b3 = sign([i, j], p3, p1) < 0;
+                        if ((b1 == b2) && (b2 == b3)) {
+                            // Calculate the height of the plane at the pixel position
+                            const z = -(normal[0] * i + normal[1] * j + d) / normal[2];
+
+                            // Interpolate the color based on the height
+                            const color = interpolateColor(z, p1, p2, p3);
+                            ctx.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+                            ctx.fillRect(i, j, 1, 1);
+                        }
+                    }
+                }
+
+                p1 = null;
+                p2 = null;
+                p3 = null;
+            }
+        })
+
+        function sign(p1, p2, p3) {
+            return (p1[0] - p3[0]) * (p2[1] - p3[1]) - (p2[0] - p3[0]) * (p1[1] - p3[1]);
+        }
+
+        function interpolateColor(z, p1, p2, p3) {
+            const alpha = ((p2[1] - p3[1])*(z - p3[2]) + (p3[2] - p2[2])*(z - p3[2])) /
+                ((p2[1] - p3[1])*(p1[2] - p3[2]) + (p3[2] - p2[2])*(p1[2] - p3[2]));
+            const beta = ((p3[1] - p1[1])*(z - p3[2]) + (p1[2] - p3[2])*(z - p3[2])) /
+                ((p2[1] - p3[1])*(p1[2] - p3[2]) + (p3[2] - p2[2])*(p1[2] - p3[2]));
+            const gamma = 1.0 - alpha - beta;
+
+            const color1 = hexToRgb(p1[2]);
+            const color2 = hexToRgb(p2[2]);
+            const color3 = hexToRgb(p3[2]);
+
+            return [
+                Math.round(alpha * color1[0] + beta * color2[0] + gamma * color3[0]),
+                Math.round(alpha * color1[1] + beta * color2[1] + gamma * color3[1]),
+                Math.round(alpha * color1[2] + beta * color2[2] + gamma * color3[2])
+            ];
+        }
+
+        function hexToRgb(hex) {
+            if (hex.charAt(0) === '#') {
+                hex = hex.slice(1);
+            }
+
+            if (hex.length !== 6) {
+                return null;
+            }
+
+            const r = parseInt(hex.slice(0, 2), 16);
+            const g = parseInt(hex.slice(2, 4), 16);
+            const b = parseInt(hex.slice(4, 6), 16);
+
+            if (isNaN(r) || isNaN(g) || isNaN(b)) {
+                return null;
+            }
+
+            return [r, g, b];
+        }
+    </script>
+</body>
+
+</html>
