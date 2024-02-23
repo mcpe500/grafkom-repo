@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINGKARAN SQRT MINGGU 3</title>
+    <style>
+        body {
+            background: #000;
+        }
+
+        canvas {
+            background: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas width="512px" height="512px" class="board"></canvas>
+    <script>
+        const canvas = document.querySelector(".board")
+        let p1 = null
+        let p2 = null
+        let p3 = null
+        canvas.addEventListener('click', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const ctx = canvas.getContext('2d');
+            if (p1 == null) {
+                p1 = [x, y]
+            } else if (p1 != null && p2 == null) {
+                p2 = [x, y];
+            } else {
+                p3 = [x, y]
+                // Draw the bounding box
+                const minX = Math.min(p1[0], p2[0], p3[0]);
+                const minY = Math.min(p1[1], p2[1], p3[1]);
+                const maxX = Math.max(p1[0], p2[0], p3[0]);
+                const maxY = Math.max(p1[1], p2[1], p3[1]);
+                const randomColor = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+                ctx.fillStyle = randomColor;
+                // Check each pixel in the bounding box
+                for (let i = minX; i <= maxX; i++) {
+                    for (let j = minY; j <= maxY; j++) {
+                        // Check if the pixel is inside the triangle
+                        const b1 = sign([i, j], p1, p2) < 0;
+                        const b2 = sign([i, j], p2, p3) < 0;
+                        const b3 = sign([i, j], p3, p1) < 0;
+                        if ((b1 == b2) && (b2 == b3)) {
+                            ctx.fillRect(i, j, 1, 1);
+                        }
+                    }
+                }
+
+                p1 = null;
+                p2 = null;
+                p3 = null;
+            }
+        })
+
+        function sign(p1, p2, p3) {
+            return (p1[0] - p3[0]) * (p2[1] - p3[1]) - (p2[0] - p3[0]) * (p1[1] - p3[1]);
+        }
+    </script>
+</body>
+
+</html>
