@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEGITIGA MINGGU 4</title>
+    <style>
+        body {
+            background: #000;
+        }
+
+        canvas {
+            background: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas width="512px" height="512px" class="board"></canvas>
+    <input type="color" name="" id="color1" value="#ff0000">
+    <input type="color" name="" id="color2" value="#00ff00">
+    <input type="color" name="" id="color3" value="#0000ff">
+    <script>
+        const canvas = document.querySelector(".board")
+        let p1 = null
+        let p2 = null
+        let p3 = null
+        const color1 = document.getElementById("color1")
+        const color2 = document.getElementById("color2")
+        const color3 = document.getElementById("color3")
+
+        canvas.addEventListener('click', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const ctx = canvas.getContext('2d');
+
+            if (p1 == null) {
+                p1 = { x, y, color: color1.value }
+            } else if (p1 != null && p2 == null) {
+                p2 = { x, y, color: color2.value };
+            } else {
+                p3 = { x, y, color: color3.value }
+
+                // Calculate the bounding box
+                const minX = Math.min(p1.x, p2.x, p3.x);
+                const minY = Math.min(p1.y, p2.y, p3.y);
+                const maxX = Math.max(p1.x, p2.x, p3.x);
+                const maxY = Math.max(p1.y, p2.y, p3.y);
+
+                const [x1, y1] = Object.values(p1)
+                const [x2, y2] = Object.values(p2)
+                const [x3, y3] = Object.values(p3)
+                const [r1, g1, b1] = hexToRgb(p1.color)
+                const [r2, g2, b2] = hexToRgb(p2.color)
+                const [r3, g3, b3] = hexToRgb(p3.color)
+
+                // Mendefinisikan tiga titik untuk masing-masing R, G, dan B
+                var red1 = [x1, y1, r1];
+                var red2 = [x2, y2, r2];
+                var red3 = [x3, y3, r3];
+
+                var green1 = [x1, y1, g1];
+                var green2 = [x2, y2, g2];
+                var green3 = [x3, y3, g3];
+
+                var blue1 = [x1, y1, b1];
+                var blue2 = [x2, y2, b2];
+                var blue3 = [x3, y3, b3];
+
+                // Menghitung persamaan bidang untuk masing-masing R, G, dan B
+                var redPlane = planeEquation(red1, red2, red3);
+                var greenPlane = planeEquation(green1, green2, green3);
+                var bluePlane = planeEquation(blue1, blue2, blue3);
+
+                for (let i = minX; i <= maxX; i++) {
+                    for (let j = minY; j <= maxY; j++) {
+                        const b1 = sign([i, j], [p1.x, p1.y], [p2.x, p2.y]) < 0;
+                        const b2 = sign([i, j], [p2.x, p2.y], [p3.x, p3.y]) < 0;
+                        const b3 = sign([i, j], [p3.x, p3.y], [p1.x, p1.y]) < 0;
+
+                        if ((b1 === b2) && (b2 === b3)) {
+                            // Menghitung nilai z untuk masing-masing bidang R, G, dan B
+                            var zR = planeZ(i, j, redPlane);
+                            var zG = planeZ(i, j, greenPlane);
+                            var zB = planeZ(i, j, bluePlane);
+
+                            // Mengubah nilai z menjadi nilai RGB
+                            var r = Math.round(zR);
+                            var g = Math.round(zG);
+                            var b = Math.round(zB);
+
+                            // Mengubah nilai RGB menjadi string warna
+                            var color = rgbString(r, g, b);
+
+                            // Mengatur warna isian dengan string warna
+                            ctx.fillStyle = color;
+
+                            ctx.fillRect(i, j, 1, 1);
+                        }
+                    }
+                }
+
+
+                // Reset points
+                p1 = null;
+                p2 = null;
+                p3 = null;
+            }
+        });
+
+        // Function to calculate the sign of a triangle
+        function sign(p1, p2, p3) {
+            return (p1[0] - p3[0]) * (p2[1] - p3[1]) - (p2[0] - p3[0]) * (p1[1] - p3[1]);
+        }
+        function hexToRgb(hex) {
+            // Remove the hash (#) if it exists
+            hex = hex.replace("#", '');
+
+            // Convert the hex color code to RGB
+            var r = parseInt(hex.substring(0, 2), 16);
+            var g = parseInt(hex.substring(2, 4), 16);
+            var b = parseInt(hex.substring(4, 6), 16);
+
+            return [r, g, b];
+        }
+        // Fungsi untuk menghitung cross product antara dua vektor
+        function crossProduct(v1, v2) {
+            return [
+                v1[1] * v2[2] - v1[2] * v2[1],
+                v1[2] * v2[0] - v1[0] * v2[2],
+                v1[0] * v2[1] - v1[1] * v2[0]
+            ];
+        }
+
+        // Fungsi untuk menghitung persamaan bidang 3D yang melalui tiga titik
+        function planeEquation(p1, p2, p3) {
+            // Menghitung vektor p1p2 dan p1p3
+            var v1 = [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]];
+            var v2 = [p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]];
+
+            // Menghitung cross product antara vektor p1p2 dan p1p3
+            var n = crossProduct(v1, v2);
+
+            // Menghitung konstanta d dengan mengganti salah satu titik ke dalam persamaan
+            var d = n[0] * p1[0] + n[1] * p1[1] + n[2] * p1[2];
+
+            // Mengembalikan koefisien A, B, C, dan D dalam bentuk array
+            return [n[0], n[1], n[2], d];
+        }
+
+        // Fungsi untuk mengubah nilai RGB menjadi string warna
+        function rgbString(r, g, b) {
+            // Memastikan nilai RGB berada dalam rentang 0-255
+            r = Math.max(0, Math.min(255, r));
+            g = Math.max(0, Math.min(255, g));
+            b = Math.max(0, Math.min(255, b));
+
+            // Mengembalikan string warna dengan format rgb(r, g, b)
+            return "rgb(" + r + ", " + g + ", " + b + ")";
+        }
+        // Fungsi untuk menghitung nilai z dari persamaan bidang 3D
+        function planeZ(x, y, plane) {
+            // Mengambil koefisien A, B, C, dan D dari array
+            var [A, B, C, D] = plane;
+
+            // Menghitung nilai z dengan rumus z = (D - Ax - By) / C
+            var z = (D - A * x - B * y) / C;
+
+            // Mengembalikan nilai z
+            return z;
+        }
+
+
+    </script>
+</body>
+
+</html>
