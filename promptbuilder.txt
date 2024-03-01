@@ -1,0 +1,95 @@
+ini harus dilakukan
+```
+Kriteria:
+Buat 2 huruf inisial nama, jejer kiri kanan
+Beri warna gradasi yg halus
+Animasikan putar CW dan CCW dengan kecepatan berbeda
+Program:
+Harus jelas terlihat matriks-matriks transformasinya.
+Jangan menggunakan library luar dulu.
+```
+
+ini kriteria tambahan
+```
+Week 04 TRANSFORMASI
+
+HTML5 + JS Internal
+Inisialisasi WebGL,
+dan gambar 1 pixel merah di tengah layar.
+Pastikan WebGL versi 2 dan shader GLSL versi 3.
+Pastikan juga, program shader ditulis dalam multiline (pakek `  ).
+
+tanda benar: webgl2 di getcontext canvas
+			ada `#version 300 es	
+_________________________
+HARUS PAKAI INDEX, menggambar harus pakai DrawElements (bukan DrawArrays).
+Harus juga pakai topologi gl.TRIANGLES bukan TRIANGLE_STRIP atau TRIIANGLE_FAN.
+_________________________
+
+KOORDINAT dan WARNA harus berupa array di JS.
+bukan deklarasi dlm shader.
+Lebih baik juga, jadi 2 array yg terpisah: koordinat xy + warna rgb.
+```
+
+ini template kode
+```
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MINGGU 5 ROTASI</title>
+    <style>
+        body {
+            background: #000;
+        }
+
+        canvas {
+            background: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas width="512px" height="512px" class="board"></canvas>
+    <script>
+        const canvas = document.querySelector(".board")
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        // Initialize the GL context
+        const gl = canvas.getContext("webgl2");
+
+        // Only continue if WebGL is available
+        if (!gl) {
+            alert("Your browser does not support WebGL.");
+        }
+
+        // Define the vertices for the initials
+        const vertices = new Float32Array([
+            // Add your vertices here
+        ]);
+
+        // Define the colors for the vertices
+        const colors = new Float32Array([
+            // Add your colors here
+        ]);
+
+        // Create a buffer for the vertices
+        const vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+        // Create a buffer for the colors
+        const colorBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+
+        // Add your shader program here
+
+    </script>
+</body>
+
+</html>
+```
