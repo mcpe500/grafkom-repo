@@ -20,17 +20,20 @@
 
         // Mendefinisikan shader
         var vertexShaderSource = `#version 300 es
-in vec4 a_position;
+in vec2 a_position;
+out vec2 v_texcoord;
 void main() {
-    gl_Position = a_position;
+    gl_Position = vec4(a_position, 0.0, 1.0);
+    v_texcoord = (a_position + 1.0) / 2.0; // Mengubah koordinat ke rentang [0,1]
 }`;
 
         var fragmentShaderSource = `#version 300 es
 precision mediump float;
+in vec2 v_texcoord;
 out vec4 outColor;
 void main() {
-    // Gradasi warna dari merah ke kuning berdasarkan posisi
-    outColor = vec4(1.0, gl_FragCoord.x / 640.0, 0.0, 1.0);
+    // Gradasi warna dari kiri ke kanan dan dari atas ke bawah
+    outColor = vec4(v_texcoord.x, v_texcoord.y, 0.0, 1.0);
 }`;
 
         // Membuat dan mengkompilasi shader
@@ -50,12 +53,17 @@ void main() {
         gl.attachShader(program, fragmentShader);
         gl.linkProgram(program);
 
-        // Membuat posisi titik-titik untuk kotak
+        // Membuat posisi titik-titik dan warna gradasi
         var positions = [
-            -0.5,  0.5,  // Posisi titik atas kiri
-             0.5,  0.5,  // Posisi titik atas kanan
-            -0.5, -0.5,  // Posisi titik bawah kiri
-             0.5, -0.5   // Posisi titik bawah kanan
+            -0.5, -0.5,
+             0.5, -0.5,
+            -0.5,  0.5,
+             0.5,  0.5
+        ];
+
+        var indices = [
+            0, 1, 2,
+            1, 2, 3
         ];
 
         // Membuat buffer untuk posisi titik-titik
@@ -70,9 +78,14 @@ void main() {
         gl.enableVertexAttribArray(positionAttributeLocation);
         gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
+        // Membuat buffer untuk indeks
+        var indexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+
         // Menggambar kotak dengan gradasi warna
         gl.useProgram(program);
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
     </script>
 </body>
 
