@@ -61,7 +61,8 @@ void main() {
         gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
         // Menggambar pixel
-        gl.useProgram(program); var positions = [
+        gl.useProgram(program);
+        var positions = [
             0.0, 0.5, // Posisi titik atas
             -0.5, -0.5, // Posisi titik kiri bawah
             0.5, -0.5 // Posisi titik kanan bawah
