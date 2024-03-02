@@ -90,8 +90,8 @@ outColor = vec4(gl_FragCoord.x/640.0, gl_FragCoord.y/480.0, 0.5, 1);
             ...positionI, ...positionS,
         ].map(p => {
             i++
-            if (i % 2 == 0) return p - 0.2
-            else return p + 0.2
+            if (i % 2 == 0) return p - 0.5
+            else return p + 0.25
         });
 
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
