@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+    <canvas id="canvas" width="512px" height="512px"></canvas>
+    <script>
+        var canvas = document.getElementById('canvas');
+        var gl = canvas.getContext('webgl2');
+        gl.depthFunc(gl.LEQUAL);
+
+        // VERTICES
+        const square = new Float32Array([
+            -1.0, 1.0,// Vertex 1 (Top left corner)
+            -1.0, -1.0,// Vertex 2 (Bottom left corner)
+            1.0, -1.0,// Vertex 3 (Bottom right corner)
+            1.0, -1.0,// Vertex 3 (Bottom right corner)
+            1.0, 1.0,// Vertex 4 (Top right corner)
+            -1.0, 1.0 // Vertex 1 (Top left corner)
+        ]);
+        // let vertices = [];
+        // let index = 0;
+        // // I
+        // vertices.push(...square.map(c => {
+        //     index += 1;
+        //     if (index % 2 == 0) return c * 0.025 + 0.8
+        //     else return c * 0.1 - 0.6
+        // }));
+        // vertices.push(...square.map(c => {
+        //     index += 1;
+        //     if (index % 2 == 0) return c * 0.4 + 0.4
+        //     else return c * 0.025 - 0.6
+        // }));
+        // vertices.push(...square.map(c => {
+        //     index += 1;
+        //     if (index % 2 == 0) return c * 0.025
+        //     else return c * 0.1 - 0.6
+        // }));
+
+        // // S
+        // vertices.push(...square.map(c => {
+        //     index += 1;
+        //     if (index % 2 == 0) return c * 0.025
+        //     else return c * 0.2
+        // }));
+        // vertices.push(...square.map(c => {
+        //     index += 1;
+        //     if (index % 2 == 0) return c * 0.025 + 0.8
+        //     else return c * 0.2
+        // }));
+        // vertices.push(...square.map(c => {
+        //     index += 1;
+        //     if (index % 2 == 0) return c * 0.175 + 0.2
+        //     else return c * 0.025 + 0.175
+        // }));
+        // vertices.push(...square.map(c => {
+        //     index += 1
+        //     if (index % 2 == 0) return c * 0.025 + 0.4
+        //     else return c * 0.2
+        // }));
+        // vertices.push(...square.map(c => {
+        //     index += 1;
+        //     if (index % 2 == 0) return c * 0.175 + 0.6
+        //     else return c * 0.025 - 0.175
+        // }));
+        // vertices = new Float32Array(vertices);
+        var vertices = [
+            -0.699999988079071, 0.824999988079071, -0.699999988079071,
+            0.7749999761581421, -0.5, 0.7749999761581421,
+            -0.5, 0.7749999761581421, -0.5,
+            0.824999988079071, -0.699999988079071, 0.824999988079071,
+            -0.625, 0.800000011920929, -0.625,
+            0, -0.574999988079071, 0,
+            -0.574999988079071, 0, -0.574999988079071,
+            0.800000011920929, -0.625, 0.800000011920929,
+            -0.699999988079071, 0.02500000037252903, -0.699999988079071,
+            -0.02500000037252903, -0.5, -0.02500000037252903,
+            -0.5, -0.02500000037252903, -0.5,
+            0.02500000037252903, -0.699999988079071, 0.02500000037252903,
+            -0.20000000298023224, 0.02500000037252903, -0.20000000298023224,
+            -0.02500000037252903, 0.20000000298023224, -0.02500000037252903,
+            0.20000000298023224, -0.02500000037252903, 0.20000000298023224,
+            0.02500000037252903, -0.20000000298023224, 0.02500000037252903,
+            -0.20000000298023224, 0.824999988079071, -0.20000000298023224,
+            0.7749999761581421, 0.20000000298023224, 0.7749999761581421,
+            0.20000000298023224, 0.7749999761581421, 0.20000000298023224,
+            0.824999988079071, -0.20000000298023224, 0.824999988079071,
+            0.15000000596046448, 0.375, 0.15000000596046448,
+            0.02500000037252903, 0.20000000298023224, 0.02500000037252903,
+            0.20000000298023224, 0.02500000037252903, 0.20000000298023224,
+            0.375, 0.15000000596046448, 0.375,
+            -0.20000000298023224, 0.42500001192092896, -0.20000000298023224,
+            0.375, 0.20000000298023224, 0.375,
+            0.20000000298023224, 0.375, 0.20000000298023224,
+            0.42500001192092896, -0.20000000298023224, 0.42500001192092896,
+            -0.20000000298023224, 0.7749999761581421, -0.20000000298023224,
+            0.42500001192092896, -0.15000000596046448, 0.42500001192092896,
+            -0.15000000596046448, 0.42500001192092896, -0.15000000596046448,
+            0.7749999761581421, -0.20000000298023224, 0.7749999761581421
+        ];
+        var colors = [
+            // Colors for the "G"
+            0.000, 0.000, 1.000,// Color 1 - Blue
+            0.000, 1.000, 1.000,// Color 2 - Cyan
+            0.000, 1.000, 0.000,// Color 3 - Green
+            0.000, 0.000, 1.000,// Color 4 - Blue
+            0.000, 1.000, 1.000,// Color 5 - Cyan
+            0.000, 1.000, 0.000,// Color 6 - Green
+            0.000, 0.000, 1.000,// Color 7 - Blue
+            0.000, 1.000, 1.000,// Color 8 - Cyan
+            0.000, 1.000, 0.000,// Color 9 - Green
+            0.000, 0.000, 1.000,// Color 10 - Blue
+            0.000, 1.000, 1.000,// Color 11 - Cyan
+
+            // Colors for the "K"
+            1.000, 0.000, 1.000,// Color 12 - Magenta
+            1.000, 0.000, 0.000,// Color 13 - Red
+            1.000, 0.000, 1.000,// Color 14 - Magenta
+            1.000, 0.000, 0.000,// Color 15 - Red
+            1.000, 0.000, 1.000,// Color 16 - Magenta
+            1.000, 0.000, 0.000,// Color 17 - Red
+            1.000, 0.000, 0.000,// Color 18 - Red
+            1.000, 0.000, 1.000,// Color 19 - Magenta
+            1.000, 0.000, 0.000,// Color 20 - Red
+            1.000, 0.000, 0.000,// Color 21 - Red
+            1.000, 1.000, 0.000,// Color 22 - Yellow
+            1.000, 1.000, 0.000,// Color 23 - Yellow
+        ];
+
+        var indices = [
+            // Indices for the "G"
+            0, 1, 2,
+            1, 2, 3,
+            0, 2, 8,
+            2, 6, 8,
+            6, 8, 9,
+            6, 7, 9,
+            10, 7, 9,
+            9, 10, 4,
+            5, 4, 10,
+
+            // Indices for the "K"
+            11, 12, 16,
+            11, 16, 22,
+            22, 13, 14,
+            22, 14, 17,
+            15, 16, 22,
+            15, 17, 22,
+            15, 16, 18,
+            15, 17, 20,
+            15, 18, 19,
+            15, 20, 21,
+        ];
+
+        var vertex_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+        var color_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+
+        var index_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index_buffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+
+        var vertCode = `#version 300 es
+in vec2 coordinates;
+in vec3 color;
+out vec3 vColor;
+uniform float angleG;
+uniform float angleK;
+uniform vec2 centerG;
+uniform vec2 centerK;
+void main(void) {
+mat2 rotationG = mat2(cos(angleG), -sin(angleG), sin(angleG), cos(angleG));
+mat2 rotationK = mat2(cos(angleK), sin(angleK), -sin(angleK), cos(angleK));
+vec2 pos = coordinates;
+if (coordinates.x < 0.0) {// "G"
+pos -= centerG;
+pos = rotationG * pos;
+pos += centerG;
+} else {// "K"
+pos -= centerK;
+pos = rotationK * pos;
+pos += centerK;
+}
+gl_Position = vec4(pos, 0.0, 1.0);
+vColor = color;
+}`;
+
+        var vertShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vertShader, vertCode);
+        gl.compileShader(vertShader);
+
+        var fragCode = `#version 300 es
+precision mediump float;
+in vec3 vColor;
+out vec4 FragColor;
+void main(void) {
+FragColor = vec4(vColor, 1.0);
+}`;
+
+        var fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fragShader, fragCode);
+        gl.compileShader(fragShader);
+
+        var shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertShader);
+        gl.attachShader(shaderProgram, fragShader);
+        gl.linkProgram(shaderProgram);
+        gl.useProgram(shaderProgram);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
+        var coord = gl.getAttribLocation(shaderProgram, "coordinates");
+        gl.vertexAttribPointer(coord, 2, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(coord);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
+        var color = gl.getAttribLocation(shaderProgram, "color");
+        gl.vertexAttribPointer(color, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(color);
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.enable(gl.DEPTH_TEST);
+
+        gl.viewport(0, 0, canvas.width, canvas.height);
+
+        // Get the __cpLocations of the new uniforms
+        var angleGLoc = gl.getUniformLocation(shaderProgram, 'angleG');
+        var angleKLoc = gl.getUniformLocation(shaderProgram, 'angleK');
+        var centerGLoc = gl.getUniformLocation(shaderProgram, 'centerG');
+        var centerKLoc = gl.getUniformLocation(shaderProgram, 'centerK');
+
+        // Initialize the angles
+        var angleG = 0.0;
+        var angleK = 0.0;
+
+        // Set the centers of the "G" and "K"
+        gl.uniform2f(centerGLoc, -0.5, 0.0);// Adjust as needed
+        gl.uniform2f(centerKLoc, 0.5, 0.0);// Adjust as needed
+
+        // Function to update the angles and draw
+        function draw() {
+            // Update the angles
+            angleG += 0.01;// Counter-clockwise for "G"
+            angleK += 0.02;// Clockwise for "K"
+
+            // Set the values of the 'angle' uniforms
+            gl.uniform1f(angleGLoc, angleG);
+            gl.uniform1f(angleKLoc, angleK);
+
+            // Clear and draw as before
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+
+            // Request the next frame
+            requestAnimationFrame(draw);
+        }
+
+        // Start the animation
+        draw();
+    </script>
+</body>
+
+</html>

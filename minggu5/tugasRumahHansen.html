@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letters with WebGL 2</title>
+    <style>
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="glCanvas" width="600" height="400"></canvas>
+
+    <script>
+        window.onload = function () {
+            const canvas = document.getElementById('glCanvas');
+            const gl = canvas.getContext('webgl2');
+
+            if (!gl) {
+                alert('Unable to initialize WebGL 2. Your browser may not support it.');
+                return;
+            }
+
+            // Define vertex shader code
+            const vsSource = `#version 300 es
+                in vec2 a_position;
+                uniform float u_time;
+                out vec2 v_position;
+                void main() {
+                    vec2 midPoint;
+                    if (a_position.x <= 0.0) {
+                        midPoint = vec2(-0.4, 0.0); // Midpoint of 'H'
+                    } else {
+                        midPoint = vec2(0.4, 0.0); // Midpoint of 'A'
+                    }
+
+                    vec2 translatedPosition = a_position - midPoint;
+                    float angle;
+                    if (a_position.x <= 0.0) {
+                        angle = u_time * 2.0;   // Spin one direction for 'H'
+                    } else {
+                        angle = -u_time * 4.0;  // Spin the opposite direction for 'A'
+                    }
+                    mat2 rotation = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+                    vec2 rotatedPosition = rotation * translatedPosition;
+                    vec2 finalPosition = rotatedPosition + midPoint;
+
+                    gl_Position = vec4(finalPosition, 0.0, 1.0);
+                    v_position = finalPosition;
+                }
+            `;
+
+            // Define fragment shader code
+            const fsSource = `#version 300 es
+                precision mediump float;
+                in vec2 v_position;
+                out vec4 fragColor;
+                void main() {
+                    // Color based on position
+                    float red = abs(v_position.x);
+                    float green = abs(v_position.y);
+                    fragColor = vec4(red, green, 0.5, 1.0);
+                }
+            `;
+
+            // Create shaders
+            const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(vertexShader, vsSource);
+            gl.compileShader(vertexShader);
+
+            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(fragmentShader, fsSource);
+            gl.compileShader(fragmentShader);
+
+            // Create shader program
+            const shaderProgram = gl.createProgram();
+            gl.attachShader(shaderProgram, vertexShader);
+            gl.attachShader(shaderProgram, fragmentShader);
+            gl.linkProgram(shaderProgram);
+            gl.useProgram(shaderProgram);
+
+            // Set up vertex buffer
+            const positionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+            const square = new Float32Array([
+                -1.0, 1.0, // Vertex 1 (Top left corner)
+                -1.0, -1.0, // Vertex 2 (Bottom left corner)
+                1.0, -1.0, // Vertex 3 (Bottom right corner)
+                1.0, -1.0, // Vertex 3 (Bottom right corner)
+                1.0, 1.0, // Vertex 4 (Top right corner)
+                -1.0, 1.0 // Vertex 1 (Top left corner)
+            ]);
+
+            // const positions = [
+            //     // H
+            //     -0.6,  -0.5,
+            //     -0.5,  -0.5,
+            //     -0.5,  0.5,
+
+            //     -0.5,  0.5,
+            //     -0.6,  -0.5,
+            //     -0.6,  0.5,
+
+            //     -0.3,  -0.5,
+            //     -0.2,  -0.5,
+            //     -0.2,  0.5,
+
+            //     -0.2,  0.5,
+            //     -0.3,  -0.5,
+            //     -0.3,  0.5,
+
+            //     -0.5,  -0.05,
+            //     -0.3,  -0.05,
+            //     -0.3,  0.05,
+
+            //     -0.3,  0.05,
+            //     -0.5,  0.05,
+            //     -0.5,  -0.05,
+
+            //     // A
+            //     0.4,  0.5,
+            //     0.2,  -0.5,
+            //     0.3,  0.5,
+
+            //     0.4,  0.5,
+            //     0.3,  -0.5,
+            //     0.2,  -0.5,
+
+            //     0.6,  -0.5,
+            //     0.4,  0.5,
+            //     0.5,  0.5,
+
+            //     0.6,  -0.5,
+            //     0.4,  0.5,
+            //     0.5,  -0.5,
+
+            //     0.5,  -0.05,
+            //     0.3,  -0.05,
+            //     0.3,  0.05,
+
+            //     0.3,  0.05,
+            //     0.5,  0.05,
+            //     0.5,  -0.05,
+            // ];
+            let positions = [];
+            let index = 0;
+            // I
+            positions.push(...square.map(c => {
+                index += 1;
+                if (index % 2 == 0) return c * 0.025 + 0.8;
+                else return c * 0.1 - 0.6;
+            }));
+            positions.push(...square.map(c => {
+                index += 1;
+                if (index % 2 == 0) return c * 0.4 + 0.4;
+                else return c * 0.025 - 0.6;
+            }));
+            positions.push(...square.map(c => {
+                index += 1;
+                if (index % 2 == 0) return c * 0.025;
+                else return c * 0.1 - 0.6;
+            }));
+
+            // S
+            positions.push(...square.map(c => {
+                index += 1;
+                if (index % 2 == 0) return c * 0.025;
+                else return c * 0.2;
+            }));
+            positions.push(...square.map(c => {
+                index += 1;
+                if (index % 2 == 0) return c * 0.025 + 0.8;
+                else return c * 0.2;
+            }));
+            positions.push(...square.map(c => {
+                index += 1;
+                if (index % 2 == 0) return c * 0.175 + 0.2;
+                else return c * 0.025 + 0.175;
+            }));
+            positions.push(...square.map(c => {
+                index += 1;
+                if (index % 2 == 0) return c * 0.025 + 0.4;
+                else return c * 0.2;
+            }));
+            positions.push(...square.map(c => {
+                index += 1;
+                if (index % 2 == 0) return c * 0.175 + 0.6;
+                else return c * 0.025 - 0.175;
+            }));
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+            const positionAttributeLocation = gl.getAttribLocation(shaderProgram, 'a_position');
+            gl.enableVertexAttribArray(positionAttributeLocation);
+            gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+            // Clear canvas
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            // Draw the letters
+            let then = 0;
+            function render(now) {
+                now *= 0.001;  // convert to seconds
+                const deltaTime = now - then;
+                then = now;
+
+                gl.uniform1f(gl.getUniformLocation(shaderProgram, 'u_time'), now);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                gl.drawArrays(gl.TRIANGLES, 0, positions.length / 2);
+
+                requestAnimationFrame(render);
+            }
+            requestAnimationFrame(render);
+        };
+    </script>
+</body>
+
+</html>
