@@ -1,0 +1,26 @@
+﻿Build started 11/2/2015 1:07:01 PM.
+     1>Project "E:\VSPROJECTS\Goblet_projection\Goblet\Goblet.vcxproj" on node 2 (Build target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _WINDOWS /D _DEBUG /D _UNICODE /D UNICODE /D _AFXDLL /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"Debug\Goblet.pch" /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt GobletDlg.cpp
+         GobletDlg.cpp
+     1>e:\vsprojects\goblet_projection\goblet\gobletdlg.cpp(245): warning C4244: 'argument' : conversion from 'double' to 'int', possible loss of data
+     1>e:\vsprojects\goblet_projection\goblet\gobletdlg.cpp(279): warning C4244: 'argument' : conversion from 'double' to 'int', possible loss of data
+     1>e:\vsprojects\goblet_projection\goblet\gobletdlg.cpp(280): warning C4244: 'argument' : conversion from 'double' to 'int', possible loss of data
+     1>e:\vsprojects\goblet_projection\goblet\gobletdlg.cpp(434): warning C4244: 'argument' : conversion from 'double' to 'int', possible loss of data
+     1>e:\vsprojects\goblet_projection\goblet\gobletdlg.cpp(435): warning C4244: 'argument' : conversion from 'double' to 'int', possible loss of data
+     1>e:\vsprojects\goblet_projection\goblet\gobletdlg.cpp(436): warning C4244: 'argument' : conversion from 'double' to 'int', possible loss of data
+     1>e:\vsprojects\goblet_projection\goblet\gobletdlg.cpp(437): warning C4244: 'argument' : conversion from 'double' to 'int', possible loss of data
+     1>e:\vsprojects\goblet_projection\goblet\gobletdlg.cpp(632): warning C4101: 'buf' : unreferenced local variable
+       ResourceCompile:
+         C:\Program Files (x86)\Windows Kits\8.1\bin\x86\rc.exe /D _DEBUG /D _UNICODE /D UNICODE /D _AFXDLL /l"0x0409" /IDebug\ /nologo /fo"Debug\Goblet.res" Goblet.rc 
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"E:\VSPROJECTS\Goblet_projection\Debug\Goblet.exe" /INCREMENTAL /NOLOGO /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /manifestinput:"C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\Include\Manifest\dpiaware.manifest" /DEBUG /PDB:"E:\VSPROJECTS\Goblet_projection\Debug\Goblet.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /ENTRY:"wWinMainCRTStartup" /DYNAMICBASE /NXCOMPAT /IMPLIB:"E:\VSPROJECTS\Goblet_projection\Debug\Goblet.lib" /MACHINE:X86 Debug\Goblet.res
+         Debug\Goblet.obj
+         Debug\GobletDlg.obj
+         Debug\stdafx.obj
+         Goblet.vcxproj -> E:\VSPROJECTS\Goblet_projection\Debug\Goblet.exe
+     1>Done Building Project "E:\VSPROJECTS\Goblet_projection\Goblet\Goblet.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:00.87

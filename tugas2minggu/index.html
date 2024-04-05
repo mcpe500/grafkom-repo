@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+        #myCanvas {
+            border: 1px solid black;
+            float: left;
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main">
+        <canvas id="myCanvas" width="1000" height="720"></canvas>
+        <div id="camera-position">
+            <h3>Camera Position</h3>
+            <label for="x">X: </label>
+            <input type="number" id="camera-x" value="100.0" />
+            <label for="y">Y: </label>
+            <input type="number" id="camera-y" value="400.0" />
+            <label for="z">Z: </label>
+            <input type="number" id="camera-z" value="-1000.0" />
+        </div>
+        <div id="lookat-position">
+            <h3>Look At Position</h3>
+            <label for="x">X: </label>
+            <input type="number" id="lookat-x" value="100.0" />
+            <label for="y">Y: </label>
+            <input type="number" id="lookat-y" value="0.0" />
+            <label for="z">Z: </label>
+            <input type="number" id="lookat-z" value="0.0" />
+        </div>
+        <div id="up-vector">
+            <h3>Up Vector</h3>
+            <input type="number" id="up-x" value="0.0" />
+            <input type="number" id="up-y" value="1.0" />
+            <input type="number" id="up-z" value="0.0" />
+        </div>
+        <div id="bukaan">
+            <h3>Bukaan</h3>
+            <p>Bukaan W :</p>
+            <input type="number" name="bukaan-w" id="bukaan-w" value="60.0" />
+            derajat
+            <p>Bukaan H :</p>
+            <input type="number" name="bukaan-h" id="bukaan-h" value="60.0" />
+            derajat
+        </div>
+        <div id="clip">
+            <h3>Clip</h3>
+            <p>Clip Near :</p>
+            <input type="number" name="clip-near" id="clip-near" value="1.0" />
+            <p>Clip Far :</p>
+            <input type="number" name="clip-far" id="clip-far" value="1000.0" />
+        </div>
+        <button onclick="drawCanvas()">Gambar</button>
+    </div>
+    <script src="./obj_files/LEGO_Man.js"></script>
+    <script>
+        const canvas = document.getElementById("myCanvas");
+        const ctx = canvas.getContext("2d");
+        function drawCanvas() {
+            const cameraX = parseFloat(document.getElementById("camera-x").value);
+            const cameraY = parseFloat(document.getElementById("camera-y").value);
+            const cameraZ = parseFloat(document.getElementById("camera-z").value);
+            const lookAtX = parseFloat(document.getElementById("lookat-x").value);
+            const lookAtY = parseFloat(document.getElementById("lookat-y").value);
+            const lookAtZ = parseFloat(document.getElementById("lookat-z").value);
+            const upX = parseFloat(document.getElementById("up-x").value);
+            const upY = parseFloat(document.getElementById("up-y").value);
+            const upZ = parseFloat(document.getElementById("up-z").value);
+            const bukaanW = parseFloat(document.getElementById("bukaan-w").value);
+            const bukaanH = parseFloat(document.getElementById("bukaan-h").value);
+            const clipNear = parseFloat(document.getElementById("clip-near").value);
+            const clipFar = parseFloat(document.getElementById("clip-far").value);
+
+            const vertices = LEGO_man.vertices.map((v) => {
+                const size = 10;
+                const positionX = cameraX;
+                const positionY = cameraY;
+                const positionZ = cameraZ;
+                return {
+                    x: (v[0] * size + positionX),
+                    y: canvas.height - (v[1] * size + positionY),
+                    z: v[2] * size + positionY,
+                }
+            });
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            vertices.forEach(vertex => {
+                ctx.fillRect(vertex.x, vertex.y, 5, 5);
+            });
+        }
+        drawCanvas(ctx);
+    </script>
+</body>
+
+</html>
