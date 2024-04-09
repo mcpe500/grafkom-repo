@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebGL2 3D - Huruf I dan S</title>
+    <style>
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <script src="https://webglfundamentals.org/webgl/resources/webgl-utils.js"></script>
+    <script src="https://webglfundamentals.org/webgl/resources/m4.js"></script>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        #version 300 es
+        layout(location = 0) in vec3 position;
+
+        uniform mat4 modelViewMatrix;
+        uniform mat4 projectionMatrix;
+
+        void main() {
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    </script>
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        #version 300 es
+        precision highp float;
+        out vec4 outColor;
+
+        void main() {
+            outColor = vec4(0.8, 0.2, 0.2, 1.0);
+        }
+    </script>
+    <script>
+        var canvas = document.getElementById('canvas');
+        var gl = canvas.getContext('webgl2');
+
+        // Vertex shader program
+        var vertexShaderSource = document.getElementById('vertex-shader').text;
+        var vertexShader = webglUtils.createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+
+        // Fragment shader program
+        var fragmentShaderSource = document.getElementById('fragment-shader').text;
+        var fragmentShader = webglUtils.createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+
+        // Create a WebGL program
+        var program = webglUtils.createProgram(gl, vertexShader, fragmentShader);
+
+        gl.useProgram(program);
+
+        // Set up buffers and data
+        var vertexData = [
+            // I
+            -0.05, 0.1, 0.0, -0.05, -0.1, 0.0, 0.05, -0.1, 0.0, 0.05, 0.1, 0.0,
+            // S
+            0.1, 0.1, 0.0, 0.1, 0.05, 0.0, 0.05, 0.05, 0.0, 0.05, 0.1, 0.0,
+            0.1, -0.05, 0.0, 0.05, -0.05, 0.0, 0.05, -0.1, 0.0, 0.1, -0.1, 0.0
+        ];
+
+        var vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexData), gl.STATIC_DRAW);
+
+        var positionAttribLocation = gl.getAttribLocation(program, 'position');
+        gl.vertexAttribPointer(positionAttribLocation, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(positionAttribLocation);
+
+        // Set up matrices
+        var modelViewMatrix = m4.identity();
+        var projectionMatrix = m4.perspective(Math.PI / 3, canvas.width / canvas.height, 0.1, 100.0);
+
+        m4.translate(modelViewMatrix, [-0.5, 0.0, -1.0], modelViewMatrix);
+
+        var modelViewMatrixLocation = gl.getUniformLocation(program, 'modelViewMatrix');
+        var projectionMatrixLocation = gl.getUniformLocation(program, 'projectionMatrix');
+
+        gl.uniformMatrix4fv(modelViewMatrixLocation, false, modelViewMatrix);
+        gl.uniformMatrix4fv(projectionMatrixLocation, false, projectionMatrix);
+
+        // Clear the canvas
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        // Set up rotation angles
+        var xRotationAngle = 0.0;
+        var yRotationAngle = 0.0;
+        var zRotationAngle = 0.0;
+
+        // Draw the scene repeatedly
+        function drawScene() {
+            xRotationAngle += 0.01;
+            yRotationAngle += 0.02;
+            zRotationAngle += 0.03;
+
+            m4.identity(modelViewMatrix);
+            m4.translate(modelViewMatrix, [-0.5, 0.0, -1.0], modelViewMatrix);
+            m4.rotateX(modelViewMatrix, xRotationAngle, modelViewMatrix);
+            m4.rotateY(modelViewMatrix, yRotationAngle, modelViewMatrix);
+            m4.rotateZ(modelViewMatrix, zRotationAngle, modelViewMatrix);
+
+            gl.uniformMatrix4fv(modelViewMatrixLocation, false, modelViewMatrix);
+
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.drawArrays(gl.TRIANGLE_FAN, 0, 4); // Draw I
+            gl.drawArrays(gl.TRIANGLE_FAN, 4, 8); // Draw S
+
+            requestAnimationFrame(drawScene);
+        }
+
+        requestAnimationFrame(drawScene);
+    </script>
+</body>
+</html>

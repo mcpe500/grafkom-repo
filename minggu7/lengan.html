@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Three Connected Arms</title>
+</head>
+
+<body>
+    <canvas id="canvas" width="400" height="400"></canvas>
+    <script type="module">
+        class Matrix3 {
+            constructor() {
+                this.elements = [
+                    1, 0, 0,
+                    0, 1, 0,
+                    0, 0, 1
+                ];
+            }
+
+            setTranslate(tx, ty) {
+                this.elements[6] = tx;
+                this.elements[7] = ty;
+                return this;
+            }
+
+            rotate(angleInRadians) {
+                const c = Math.cos(angleInRadians);
+                const s = Math.sin(angleInRadians);
+                const temp1 = this.elements[0] * c + this.elements[3] * s;
+                const temp2 = this.elements[1] * c + this.elements[4] * s;
+                const temp3 = this.elements[0] * -s + this.elements[3] * c;
+                const temp4 = this.elements[1] * -s + this.elements[4] * c;
+                this.elements[0] = temp1;
+                this.elements[1] = temp2;
+                this.elements[3] = temp3;
+                this.elements[4] = temp4;
+                return this;
+            }
+
+            mul(other) {
+                const a = this.elements;
+                const b = other.elements;
+                const a00 = a[0], a01 = a[1], a02 = a[2],
+                    a10 = a[3], a11 = a[4], a12 = a[5],
+                    a20 = a[6], a21 = a[7], a22 = a[8],
+                    b00 = b[0], b01 = b[1], b02 = b[2],
+                    b10 = b[3], b11 = b[4], b12 = b[5],
+                    b20 = b[6], b21 = b[7], b22 = b[8];
+
+                return new Matrix3().setElements([
+                    a00 * b00 + a01 * b10 + a02 * b20,
+                    a00 * b01 + a01 * b11 + a02 * b21,
+                    a00 * b02 + a01 * b12 + a02 * b22,
+                    a10 * b00 + a11 * b10 + a12 * b20,
+                    a10 * b01 + a11 * b11 + a12 * b21,
+                    a10 * b02 + a11 * b12 + a12 * b22,
+                    a20 * b00 + a21 * b10 + a22 * b20,
+                    a20 * b01 + a21 * b11 + a22 * b21,
+                    a20 * b02 + a21 * b12 + a22 * b22
+                ]);
+            }
+
+            transformPoint(point) {
+                const x = point[0];
+                const y = point[1];
+                const a = this.elements;
+                const a00 = a[0], a01 = a[1], a02 = a[2],
+                    a10 = a[3], a11 = a[4], a12 = a[5],
+                    a20 = a[6], a21 = a[7], a22 = a[8];
+
+                return [
+                    a00 * x + a01 * y + a02,
+                    a10 * x + a11 * y + a12,
+                    a20 * x + a21 * y + a22
+                ];
+            }
+
+            setElements(elements) {
+                this.elements = elements;
+                return this;
+            }
+        }
+
+        const canvas = document.getElementById('canvas');
+        const gl = canvas.getContext('webgl2');
+
+        if (!gl) {
+            alert('WebGL 2 is not supported in your browser.');
+        }
+
+        const vertexShaderSource = `#version 300 es
+        in vec2 a_position;
+
+        uniform mat3 u_matrix;
+
+        void main() {
+            gl_Position = vec4((u_matrix * vec3(a_position, 1)).xy, 0, 1);
+        }`;
+
+        const fragmentShaderSource = `#version 300 es
+        precision highp float;
+
+        uniform vec4 u_color;
+        out vec4 outColor;
+
+        void main() {
+            outColor = u_color;
+        }`;
+
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+            if (success) {
+                return shader;
+            }
+
+            console.log(gl.getShaderInfoLog(shader));
+            gl.deleteShader(shader);
+        }
+
+        function createProgram(gl, vertexShader, fragmentShader) {
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            const success = gl.getProgramParameter(program, gl.LINK_STATUS);
+            if (success) {
+                return program;
+            }
+
+            console.log(gl.getProgramInfoLog(program));
+            gl.deleteProgram(program);
+        }
+
+        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+        const program = createProgram(gl, vertexShader, fragmentShader);
+
+        const positionLocation = gl.getAttribLocation(program, 'a_position');
+        const matrixLocation = gl.getUniformLocation(program, 'u_matrix');
+        const colorLocation = gl.getUniformLocation(program, 'u_color');
+
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+        const upperArmLength = 100;
+        const lowerArmLength = 60;
+        const handLength = 40;
+
+        const upperArmAngle = Math.PI / 6; // 30 degrees
+        const lowerArmAngle = Math.PI / 4; // 45 degrees
+        const handAngle = Math.PI / 2; // 90 degrees
+
+        const upperArmMatrix = new Matrix3().setTranslate(0, 0).rotate(upperArmAngle);
+        const lowerArmMatrix = new Matrix3().setTranslate(upperArmLength, 0).rotate(lowerArmAngle);
+        const handMatrix = new Matrix3().setTranslate(lowerArmLength, 0).rotate(handAngle);
+
+        const shoulderPosition = [0, 1];
+        const elbowPosition = upperArmMatrix.transformPoint([0, 1]);
+        const wristPosition = lowerArmMatrix.mul(upperArmMatrix).transformPoint([0, 2]);
+        const handPosition = handMatrix.mul(lowerArmMatrix).mul(upperArmMatrix).transformPoint([0, 3]);
+
+        console.log(`Shoulder position: (${shoulderPosition[0]}, ${shoulderPosition[1]})`);
+        console.log(`Elbow position: (${elbowPosition[0]}, ${elbowPosition[1]})`);
+        console.log(`Wrist position: (${wristPosition[0]}, ${wristPosition[1]})`);
+        console.log(`Hand position: (${handPosition[0]}, ${handPosition[1]})`);
+
+        function drawArm(startPosition, armMatrix, color, length) {
+            const positions = [
+                startPosition[0], startPosition[1],
+                startPosition[0] + length * armMatrix.elements[0], startPosition[1] + length * armMatrix.elements[3]
+            ];
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+            gl.useProgram(program);
+            gl.enableVertexAttribArray(positionLocation);
+            gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+            gl.uniformMatrix3fv(matrixLocation, false, armMatrix.elements);
+            gl.uniform4fv(colorLocation, color);
+
+            gl.drawArrays(gl.LINES, 0, 2);
+        }
+
+        function render() {
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            drawArm(shoulderPosition, upperArmMatrix, [1, 0, 0, 1], upperArmLength);
+            drawArm(elbowPosition, lowerArmMatrix, [0, 1, 0, 1], lowerArmLength);
+            drawArm(wristPosition, handMatrix, [0, 0, 1, 1], handLength);
+        }
+
+        render();
+    </script>
+</body>
+
+</html>
