@@ -19,6 +19,24 @@ function dot(a, b) {
   return a.reduce((acc, val, i) => acc + val * b[i], 0);
 }
 
+function calculateNormal(face, vertices) {
+  // Mengambil tiga titik pertama dari wajah untuk membentuk dua vektor
+  let point1 = vertices[face[0]];
+  let point2 = vertices[face[1]];
+  let point3 = vertices[face[2]];
+  // Menghitung dua vektor yang membentuk bidang wajah
+  let vector1 = subtract(point2, point1);
+  let vector2 = subtract(point3, point1);
+
+  // Menghitung normal dengan mengambil produk silang dari dua vektor ini
+  let normal = cross(vector1, vector2);
+
+  // Normalisasi normal sehingga panjangnya adalah 1
+  normal = normalize(normal);
+
+  return normal;
+}
+
 const generateIdentityMatrix = () => {
   return [
     [1, 0, 0, 0],

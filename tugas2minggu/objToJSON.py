@@ -24,7 +24,7 @@ def obj_to_json(file_path):
     return json_data
 
 # Usage example
-file_path = './obj_files/LEGO_Man.obj'
+file_path = './obj_files/Low Poly Elephant-blendswap.obj'
 json_data = obj_to_json(file_path)
 json_file_path = file_path.replace('.obj', '.json')
 with open(json_file_path, 'w') as json_file:

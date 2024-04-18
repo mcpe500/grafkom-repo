@@ -60,15 +60,16 @@
         <button onclick="drawCanvas(ctx)">Gambar</button>
     </div>
     <script src="./obj_files/LEGO_Man.js"></script>
+    <script src="./obj_files/Low Poly Elephant-blendswap.js"></script>
     <script src="./utils.js"></script>
     <script>
         const canvas = document.getElementById("myCanvas");
         const ctx = canvas.getContext("2d");
-        const size = 1;
-        const positionX = 0;
-        const positionY = 0;
-        const positionZ = 0;
-
+        const size = 100;
+        const positionX = 1;
+        const positionY = 1;
+        const positionZ = 1;
+        const model = elephant;
         function lookAt(
             eyeX,
             eyeY,
@@ -152,7 +153,7 @@
             const clipNear = parseFloat(document.getElementById("clip-near").value);
             const clipFar = parseFloat(document.getElementById("clip-far").value);
 
-            let vertices = LEGO_man.vertices.map((v) => {
+            let vertices = model.vertices.map((v) => {
                 return {
                     x: v[0] * size + positionX,
                     y: v[1] * size + positionY,
@@ -160,7 +161,7 @@
                     w: 1,
                 };
             });
-            let faces = LEGO_man.faces;
+            let faces = model.faces;
 
             const translationMatrix = generateTanslasiMatrix(
                 cameraX,
@@ -193,18 +194,18 @@
                     ),
                     transformedVertex
                 );
-                transformedVertex = {
-                    x: transformedVertex.x + 200,
-                    y: canvas.height - transformedVertex.y - 440,
-                    z: transformedVertex.z,
-                };
                 transformedVertex = multiplyMatrixAndPoint(bukaanMatrix, transformedVertex);
                 transformedVertex = multiplyMatrixAndPoint(farScalingMatrix, transformedVertex);
                 transformedVertex = multiplyMatrixAndPoint(perspectiveMatrix, transformedVertex);
-                //document.write(JSON.stringify(transformedVertex), "<br>");
+                transformedVertex = {
+                    x: transformedVertex.x + 200,
+                    y: (canvas.height - transformedVertex.y) - 440,
+                    z: transformedVertex.z,
+                };
                 return transformedVertex;
             });
             // Apply the projection matrix to each vertex
+            console.log(transformedVertices)
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             // Draw faces

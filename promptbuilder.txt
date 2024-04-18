@@ -816,122 +816,171 @@ D.t[0][3] = 0.0; D.t[1][3] = 0.0; D.t[2][3] = -1; D.t[3][3] = 1.0;
 const clipNear = parseFloat(document.getElementById("clip-near").value);
 const clipFar = parseFloat(document.getElementById("clip-far").value);
 
+
+tolong pahami kode ini, kenapa tidak muncul apa apa pada canvas?
+
 ```
 
-        const canvas = document.getElementById("myCanvas");
-        const ctx = canvas.getContext("2d");
-        const size = 5;
-        const positionX = 1;
-        const positionY = 1;
-        const positionZ = 1;
+const canvas = document.getElementById("myCanvas");
+const ctx = canvas.getContext("2d");
+const size = 10;
+const positionX = 1;
+const positionY = 1;
+const positionZ = 1;
+console.log(LEGO_man)
+function lookAt(
+eyeX,
+eyeY,
+eyeZ,
+lookAtX,
+lookAtY,
+lookAtZ,
+upX,
+upY,
+upZ
+) {
+const eye = [eyeX, eyeY, eyeZ];
+const lookAt = [lookAtX, lookAtY, lookAtZ];
+const up = [upX, upY, upZ];
 
-        function lookAt(
-            eyeX,
-            eyeY,
-            eyeZ,
-            lookAtX,
-            lookAtY,
-            lookAtZ,
-            upX,
-            upY,
-            upZ
-        ) {
-            const eye = [eyeX, eyeY, eyeZ];
-            const lookAt = [lookAtX, lookAtY, lookAtZ];
-            const up = [upX, upY, upZ];
+const zAxis = normalize(subtract(eye, lookAt));
+const xAxis = normalize(cross(up, zAxis));
+const yAxis = cross(zAxis, xAxis);
 
-            const zAxis = normalize(subtract(eye, lookAt));
-            const xAxis = normalize(cross(up, zAxis));
-            const yAxis = cross(zAxis, xAxis);
+const viewMatrix = [
+[xAxis[0], xAxis[1], xAxis[2], -dot(xAxis, eye)],
+[yAxis[0], yAxis[1], yAxis[2], -dot(yAxis, eye)],
+[zAxis[0], zAxis[1], zAxis[2], -dot(zAxis, eye)],
+[0, 0, 0, 1],
+];
 
-            const viewMatrix = [
-                [xAxis[0], xAxis[1], xAxis[2], -dot(xAxis, eye)],
-                [yAxis[0], yAxis[1], yAxis[2], -dot(yAxis, eye)],
-                [zAxis[0], zAxis[1], zAxis[2], -dot(zAxis, eye)],
-                [0, 0, 0, 1],
-            ];
+return viewMatrix;
+}
+function generateBukaanMatrix(bukaanW, bukaanH) {
+const radBukaanW = (bukaanW * Math.PI) / 180;
+const radBukaanH = (bukaanH * Math.PI) / 180;
+const scaleX = 1.0 / Math.tan(radBukaanW / 2);
+const scaleY = 1.0 / Math.tan(radBukaanH / 2);
 
-            return viewMatrix;
-        }
+const matrix = [
+[scaleX, 0, 0, 0],
+[0, scaleY, 0, 0],
+[0, 0, 1, 0],
+[0, 0, 0, 1]
+];
 
-        function drawCanvas() {
-            const cameraX = parseFloat(document.getElementById("camera-x").value);
-            const cameraY = parseFloat(document.getElementById("camera-y").value);
-            const cameraZ = parseFloat(document.getElementById("camera-z").value);
-            const lookAtX = parseFloat(document.getElementById("lookat-x").value);
-            const lookAtY = parseFloat(document.getElementById("lookat-y").value);
-            const lookAtZ = parseFloat(document.getElementById("lookat-z").value);
-            const upX = parseFloat(document.getElementById("up-x").value);
-            const upY = parseFloat(document.getElementById("up-y").value);
-            const upZ = parseFloat(document.getElementById("up-z").value);
-            const bukaanW = parseFloat(document.getElementById("bukaan-w").value); // ini dalam derajat
-            const bukaanH = parseFloat(document.getElementById("bukaan-h").value); // ini dalam derajat
-            const clipNear = parseFloat(document.getElementById("clip-near").value);
-            const clipFar = parseFloat(document.getElementById("clip-far").value);
+return matrix;
+}
+function generatePerspectiveMatrix(clipNear, clipFar) {
+const k = clipNear / clipFar;
 
-            let vertices = LEGO_man.vertices.map((v) => {
-                return {
-                    x: v[0] * size + positionX,
-                    y: v[1] * size + positionY,
-                    z: v[2] * size + positionZ,
-                    w: 1,
-                };
-            });
-            let faces = LEGO_man.faces;
+const matrix = [
+[1, 0, 0, 0],
+[0, 1, 0, 0],
+[0, 0, (k - 1) / (1 - k), (2 * k) / (1 - k)],
+[0, 0, -1, 0]
+];
 
-            const translationMatrix = generateTanslasiMatrix(
-                cameraX,
-                cameraY,
-                cameraZ
-            );
-            const scalingMatrix = generateScalingMatrix(cameraX, cameraY, cameraZ);
-            const transformedVertices = vertices.map((v) => {
-                let transformedVertex = multiplyMatrixAndPoint(translationMatrix, v);
-                transformedVertex = multiplyMatrixAndPoint(
-                    scalingMatrix,
-                    transformedVertex
-                );
-                transformedVertex = multiplyMatrixAndPoint(
-                    lookAt(
-                        cameraX,
-                        cameraY,
-                        cameraZ,
-                        lookAtX,
-                        lookAtY,
-                        lookAtZ,
-                        upX,
-                        upY,
-                        upZ
-                    ),
-                    transformedVertex
-                );
-                transformedVertex = {
-                    x: transformedVertex.x + 200,
-                    y: canvas.height - transformedVertex.y - 440,
-                    z: transformedVertex.z,
-                };
-                //document.write(JSON.stringify(transformedVertex), "<br>");
-                return transformedVertex;
-            });
-            // Apply the projection matrix to each vertex
+return matrix;
+}
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // Draw faces
-            faces.forEach((face) => {
-                ctx.beginPath();
-                face.forEach((vertexIndex, index) => {
-                    let indexParts = vertexIndex.split("/");
-                    let vertexPositionIndex = parseInt(indexParts[0]);
-                    let vert = transformedVertices[vertexPositionIndex - 1];
-                    if (index === 0) {
-                        ctx.moveTo(vert.x, vert.y);
-                    } else {
-                        ctx.lineTo(vert.x, vert.y);
-                    }
-                });
-                ctx.closePath();
-                ctx.stroke();
-            });
-        }
+function generateFarScalingMatrix(clipFar) {
+const matrix = [
+[1 / clipFar, 0, 0, 0],
+[0, 1 / clipFar, 0, 0],
+[0, 0, 1 / clipFar, 0],
+[0, 0, 0, 1]
+];
+
+return matrix;
+}
+
+
+function drawCanvas() {
+const cameraX = parseFloat(document.getElementById("camera-x").value);
+const cameraY = parseFloat(document.getElementById("camera-y").value);
+const cameraZ = parseFloat(document.getElementById("camera-z").value);
+const lookAtX = parseFloat(document.getElementById("lookat-x").value);
+const lookAtY = parseFloat(document.getElementById("lookat-y").value);
+const lookAtZ = parseFloat(document.getElementById("lookat-z").value);
+const upX = parseFloat(document.getElementById("up-x").value);
+const upY = parseFloat(document.getElementById("up-y").value);
+const upZ = parseFloat(document.getElementById("up-z").value);
+const bukaanW = parseFloat(document.getElementById("bukaan-w").value); // ini dalam derajat
+const bukaanH = parseFloat(document.getElementById("bukaan-h").value); // ini dalam derajat
+const clipNear = parseFloat(document.getElementById("clip-near").value);
+const clipFar = parseFloat(document.getElementById("clip-far").value);
+
+let vertices = LEGO_man.vertices.map((v) => {
+return {
+x: v[0] * size + positionX,
+y: v[1] * size + positionY,
+z: v[2] * size + positionZ,
+w: 1,
+};
+});
+let faces = LEGO_man.faces;
+
+const translationMatrix = generateTanslasiMatrix(
+cameraX,
+cameraY,
+cameraZ
+);
+const scalingMatrix = generateScalingMatrix(cameraX, cameraY, cameraZ);
+const bukaanMatrix = generateBukaanMatrix(bukaanW, bukaanH);
+
+const perspectiveMatrix = generatePerspectiveMatrix(clipNear, clipFar);
+const farScalingMatrix = generateFarScalingMatrix(clipFar);
+
+const transformedVertices = vertices.map((v) => {
+let transformedVertex = multiplyMatrixAndPoint(translationMatrix, v);
+transformedVertex = multiplyMatrixAndPoint(
+scalingMatrix,
+transformedVertex
+);
+transformedVertex = multiplyMatrixAndPoint(
+lookAt(
+cameraX,
+cameraY,
+cameraZ,
+lookAtX,
+lookAtY,
+lookAtZ,
+upX,
+upY,
+upZ
+),
+transformedVertex
+);
+transformedVertex = {
+x: transformedVertex.x + 200,
+y: canvas.height - transformedVertex.y - 440,
+z: transformedVertex.z,
+};
+transformedVertex = multiplyMatrixAndPoint(bukaanMatrix, transformedVertex);
+transformedVertex = multiplyMatrixAndPoint(farScalingMatrix, transformedVertex);
+transformedVertex = multiplyMatrixAndPoint(perspectiveMatrix, transformedVertex);
+return transformedVertex;
+});
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+// Draw faces
+faces.forEach((face) => {
+ctx.beginPath();
+face.forEach((vertexIndex, index) => {
+let indexParts = vertexIndex.split("/");
+let vertexPositionIndex = parseInt(indexParts[0]);
+let vert = transformedVertices[vertexPositionIndex - 1];
+if (index === 0) {
+ctx.moveTo(vert.x, vert.y);
+} else {
+ctx.lineTo(vert.x, vert.y);
+}
+});
+ctx.closePath();
+ctx.stroke();
+});
+}
+
+drawCanvas(ctx);
 
 ```

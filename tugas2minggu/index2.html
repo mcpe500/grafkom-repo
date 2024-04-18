@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+            color: #333;
+        }
+
+        #myCanvas {
+            border: 3px solid #666;
+            float: left;
+            margin: 10px;
+            box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .main {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .main div {
+            margin: 10px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .main h3 {
+            border-bottom: 1px solid #666;
+            padding-bottom: 10px;
+        }
+
+        .main label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        .main input[type="number"] {
+            width: 60px;
+        }
+
+        button {
+            display: block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main">
+        <canvas id="myCanvas" width="1000" height="720"></canvas>
+        <div id="camera-position">
+            <h3>Camera Position</h3>
+            <label for="x">X: </label>
+            <input type="number" id="camera-x" value="1.0" />
+            <label for="y">Y: </label>
+            <input type="number" id="camera-y" value="1.0" />
+            <label for="z">Z: </label>
+            <input type="number" id="camera-z" value="1.0" />
+        </div>
+        <div id="lookat-position">
+            <h3>Look At Position</h3>
+            <label for="x">X: </label>
+            <input type="number" id="lookat-x" value="100.0" />
+            <label for="y">Y: </label>
+            <input type="number" id="lookat-y" value="0.0" />
+            <label for="z">Z: </label>
+            <input type="number" id="lookat-z" value="0.0" />
+        </div>
+        <div id="up-vector">
+            <h3>Up Vector</h3>
+            <input type="number" id="up-x" value="0.0" />
+            <input type="number" id="up-y" value="1.0" />
+            <input type="number" id="up-z" value="0.0" />
+        </div>
+        <div id="bukaan">
+            <h3>Bukaan</h3>
+            <p>Bukaan W :</p>
+            <input type="number" name="bukaan-w" id="bukaan-w" value="60.0" />
+            derajat
+            <p>Bukaan H :</p>
+            <input type="number" name="bukaan-h" id="bukaan-h" value="60.0" />
+            derajat
+        </div>
+        <div id="clip">
+            <h3>Clip</h3>
+            <p>Clip Near :</p>
+            <input type="number" name="clip-near" id="clip-near" value="1.0" />
+            <p>Clip Far :</p>
+            <input type="number" name="clip-far" id="clip-far" value="1000.0" />
+        </div>
+        <button onclick="drawCanvas()">Gambar</button>
+    </div>
+    <script src="./obj_files/Low Poly Elephant-blendswap.js"></script>
+    <script src="./utils.js"></script>
+    <script>
+        function calculateNormal(face, vertices) {
+            // Mengambil tiga titik pertama dari wajah untuk membentuk dua vektor
+            let point1 = vertices[face[0].split("/")[0] - 1];
+            let point2 = vertices[face[1].split("/")[0] - 1];
+            let point3 = vertices[face[2].split("/")[0] - 1];
+            // Menghitung dua vektor yang membentuk bidang wajah
+            let vector1 = subtract([point2.x,point2.y,point2.z], [point1.x,point1.y,point1.z]);
+            let vector2 = subtract([point3.x,point3.y,point3.z], [point1.x,point1.y,point1.z]);
+
+            // Menghitung normal dengan mengambil produk silang dari dua vektor ini
+            let normal = cross(vector1, vector2);
+
+            // Normalisasi normal sehingga panjangnya adalah 1
+            normal = normalize(normal);
+
+            return normal;
+        }
+
+
+        const canvas = document.getElementById("myCanvas");
+        const ctx = canvas.getContext("2d");
+        const size = 1;
+        const positionX = 1;
+        const positionY = 1;
+        const positionZ = 1;
+        const model = elephant;
+
+        function drawCanvas() {
+            const cameraX = parseFloat(document.getElementById("camera-x").value);
+            const cameraY = parseFloat(document.getElementById("camera-y").value);
+            const cameraZ = parseFloat(document.getElementById("camera-z").value);
+            const lookAtX = parseFloat(document.getElementById("lookat-x").value);
+            const lookAtY = parseFloat(document.getElementById("lookat-y").value);
+            const lookAtZ = parseFloat(document.getElementById("lookat-z").value);
+            const upX = parseFloat(document.getElementById("up-x").value);
+            const upY = parseFloat(document.getElementById("up-y").value);
+            const upZ = parseFloat(document.getElementById("up-z").value);
+            const bukaanW = parseFloat(document.getElementById("bukaan-w").value); // ini dalam derajat
+            const bukaanH = parseFloat(document.getElementById("bukaan-h").value); // ini dalam derajat
+            const clipNear = parseFloat(document.getElementById("clip-near").value);
+            const clipFar = parseFloat(document.getElementById("clip-far").value);
+
+            let vertices = model.vertices.map((v) => {
+                return {
+                    x: v[0] * size + positionX,
+                    y: v[1] * size + positionY,
+                    z: v[2] * size + positionZ,
+                    w: 1,
+                };
+            });
+            let faces = model.faces;
+
+            // Menghitung matriks view
+            let viewMatrix = computeViewMatrix(
+                cameraX,
+                cameraY,
+                cameraZ,
+                lookAtX,
+                lookAtY,
+                lookAtZ,
+                upX,
+                upY,
+                upZ
+            );
+
+            // Menghitung matriks proyeksi
+            let projectionMatrix = computeProjectionMatrix(
+                bukaanW,
+                bukaanH,
+                clipNear,
+                clipFar
+            );
+
+            // Menerapkan transformasi ke titik-titik
+            vertices = vertices.map((v) => {
+                // Mengubah koordinat dunia menjadi koordinat kamera
+                let cameraCoords = multiplyMatrixAndPoint(viewMatrix, v);
+
+                // Mengubah koordinat kamera menjadi koordinat proyeksi
+                let projectionCoords = multiplyMatrixAndPoint(
+                    projectionMatrix,
+                    cameraCoords
+                );
+
+                // Mengembalikan koordinat proyeksi
+                return projectionCoords;
+            });
+
+            // Fungsi untuk menghitung matriks view
+            function computeViewMatrix(
+                cameraX,
+                cameraY,
+                cameraZ,
+                lookAtX,
+                lookAtY,
+                lookAtZ,
+                upX,
+                upY,
+                upZ
+            ) {
+                // Menghitung vektor arah
+                let dirX = lookAtX - cameraX;
+                let dirY = lookAtY - cameraY;
+                let dirZ = lookAtZ - cameraZ;
+
+                // Normalisasi vektor arah
+                let dirLength = Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
+                dirX /= dirLength;
+                dirY /= dirLength;
+                dirZ /= dirLength;
+
+                // Menghitung vektor kanan
+                let rightX = upY * dirZ - upZ * dirY;
+                let rightY = upZ * dirX - upX * dirZ;
+                let rightZ = upX * dirY - upY * dirX;
+
+                // Normalisasi vektor kanan
+                let rightLength = Math.sqrt(
+                    rightX * rightX + rightY * rightY + rightZ * rightZ
+                );
+                rightX /= rightLength;
+                rightY /= rightLength;
+                rightZ /= rightLength;
+
+                // Menghitung vektor atas baru
+                let upXNew = dirY * rightZ - dirZ * rightY;
+                let upYNew = dirZ * rightX - dirX * rightZ;
+                let upZNew = dirX * rightY - dirY * rightX;
+
+                // Membuat matriks view
+                let viewMatrix = [
+                    [rightX, upXNew, -dirX, -cameraX],
+                    [rightY, upYNew, -dirY, -cameraY],
+                    [rightZ, upZNew, -dirZ, -cameraZ],
+                    [0, 0, 0, 1],
+                ];
+
+                // Mengembalikan matriks view
+                return viewMatrix;
+            }
+
+            // Fungsi untuk menghitung matriks proyeksi
+            function computeProjectionMatrix(bukaanW, bukaanH, clipNear, clipFar) {
+                // Mengubah bukaan dari derajat ke radian
+                let bukaanWRad = (bukaanW * Math.PI) / 180;
+                let bukaanHRad = (bukaanH * Math.PI) / 180;
+
+                // Menghitung aspek rasio
+                let aspectRatio = bukaanW / bukaanH;
+
+                // Menghitung jarak fokus
+                let focalLength = 1 / Math.tan(bukaanWRad / 2);
+
+                // Membuat matriks proyeksi ortogonal
+                let projectionMatrix = [
+                    [focalLength / aspectRatio, 0, 0, 0],
+                    [0, focalLength, 0, 0],
+                    [
+                        0,
+                        0,
+                        (clipFar + clipNear) / (clipNear - clipFar),
+                        (2 * clipFar * clipNear) / (clipNear - clipFar),
+                    ],
+                    [0, 0, -1, 0],
+                ];
+
+                // Mengembalikan matriks proyeksi
+                return projectionMatrix;
+            }
+
+            // Fungsi untuk mengalikan matriks dan titik
+            function multiplyMatrixAndPoint(matrix, point) {
+                // Inisialisasi hasil sebagai vektor nol
+                let result = { x: 0, y: 0, z: 0, w: 0 };
+
+                // Iterasi melalui setiap baris dalam matriks
+                for (let i = 0; i < 4; i++) {
+                    // Iterasi melalui setiap elemen dalam titik
+                    for (let j = 0; j < 4; j++) {
+                        // Kalikan elemen matriks dan titik yang sesuai dan tambahkan ke hasil
+                        if (j === 0) result.x += matrix[i][j] * point.x;
+                        else if (j === 1) result.y += matrix[i][j] * point.y;
+                        else if (j === 2) result.z += matrix[i][j] * point.z;
+                        else if (j === 3) result.w += matrix[i][j] * point.w;
+                    }
+                }
+
+                // Kembalikan hasil
+                return result;
+            }
+            redrawObject(vertices, faces, ctx)
+        }
+
+        function redrawObject(vertices, faces, ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Iterasi melalui setiap wajah
+            for (let face of faces) {
+                let normal = calculateNormal(face, vertices);
+                // Mulai path baru
+                let lightDirection = { x: 0, y: 1, z: 1 };
+                let dotProduct = normal.x * lightDirection.x + normal.y * lightDirection.y + normal.z * lightDirection.z;
+
+                // Atur warna garis berdasarkan dot product (simulasi pencahayaan sederhana)
+                ctx.strokeStyle = `rgb(${Math.floor(255 * dotProduct)}, ${Math.floor(255 * dotProduct)}, ${Math.floor(255 * dotProduct)})`;
+
+                ctx.beginPath();
+
+                // Iterasi melalui setiap titik dalam wajah
+                for (let i = 0; i < face.length; i++) {
+                    // Pisahkan string face[i] untuk mendapatkan indeks vertex
+                    let index = face[i].split("/")[0] - 1; // Mengurangi 1 karena indeks array dimulai dari 0
+
+                    // Dapatkan koordinat titik
+                    let vertex = vertices[index];
+                    // console.log(vertex)
+                    // console.log(vertex);
+                    // Ubah koordinat proyeksi menjadi koordinat layar
+                    let screenX = vertex.x / vertex.w;
+                    let screenY = vertex.y / vertex.w;
+
+                    // Skala dan translasi koordinat layar agar sesuai dengan canvas
+                    screenX = ((screenX + 1) / 2) * canvas.width;
+                    screenY = ((1 - screenY) / 2) * canvas.height;
+
+                    // Tambahkan titik ke path
+                    if (i === 0) {
+                        ctx.moveTo(screenX, screenY);
+                    } else {
+                        ctx.lineTo(screenX, screenY);
+                    }
+                }
+
+                // Tutup path dan gambar
+                ctx.closePath();
+                ctx.stroke();
+            }
+            console.log("object should be drawn")
+        }
+
+
+        drawCanvas(ctx);
+    </script>
+</body>
+
+</html>
