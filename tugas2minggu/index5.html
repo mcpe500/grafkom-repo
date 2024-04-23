@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+            color: #333;
+        }
+
+        #myCanvas {
+            border: 3px solid #666;
+            float: left;
+            margin: 10px;
+            box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .main {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .main div {
+            margin: 10px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .main h3 {
+            border-bottom: 1px solid #666;
+            padding-bottom: 10px;
+        }
+
+        .main label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        .main input[type="number"] {
+            width: 60px;
+        }
+
+        button {
+            display: block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main">
+        <canvas id="myCanvas" width="1000" height="720"></canvas>
+        <div id="camera-position">
+            <h3>Camera Position</h3>
+            <label for="x">X: </label>
+            <input type="number" id="camera-x" value="1.0" />
+            <label for="y">Y: </label>
+            <input type="number" id="camera-y" value="1.0" />
+            <label for="z">Z: </label>
+            <input type="number" id="camera-z" value="1.0" />
+        </div>
+        <div id="lookat-position">
+            <h3>Look At Position</h3>
+            <label for="x">X: </label>
+            <input type="number" id="lookat-x" value="100.0" />
+            <label for="y">Y: </label>
+            <input type="number" id="lookat-y" value="0.0" />
+            <label for="z">Z: </label>
+            <input type="number" id="lookat-z" value="0.0" />
+        </div>
+        <div id="up-vector">
+            <h3>Up Vector</h3>
+            <input type="number" id="up-x" value="0.0" />
+            <input type="number" id="up-y" value="1.0" />
+            <input type="number" id="up-z" value="0.0" />
+        </div>
+        <div id="bukaan">
+            <h3>Bukaan</h3>
+            <p>Bukaan W :</p>
+            <input type="number" name="bukaan-w" id="bukaan-w" value="60.0" />
+            derajat
+            <p>Bukaan H :</p>
+            <input type="number" name="bukaan-h" id="bukaan-h" value="60.0" />
+            derajat
+        </div>
+        <div id="clip">
+            <h3>Clip</h3>
+            <p>Clip Near :</p>
+            <input type="number" name="clip-near" id="clip-near" value="1.0" />
+            <p>Clip Far :</p>
+            <input type="number" name="clip-far" id="clip-far" value="1000.0" />
+        </div>
+        <button onclick="drawCanvas()">Gambar</button>
+    </div>
+    <script src="./obj_files/Low Poly Elephant-blendswap.js"></script>
+    <script src="./utils.js"></script>
+    <script>
+        const size = 1;
+        const positionX = 0;
+        const positionY = 0;
+        const positionZ = 0;
+        function drawCanvas() {
+            const canvas = document.getElementById('myCanvas');
+            const ctx = canvas.getContext('2d');
+            const cameraX = parseFloat(document.getElementById("camera-x").value);
+            const cameraY = parseFloat(document.getElementById("camera-y").value);
+            const cameraZ = parseFloat(document.getElementById("camera-z").value);
+            const lookAtX = parseFloat(document.getElementById("lookat-x").value);
+            const lookAtY = parseFloat(document.getElementById("lookat-y").value);
+            const lookAtZ = parseFloat(document.getElementById("lookat-z").value);
+            const upX = parseFloat(document.getElementById("up-x").value);
+            const upY = parseFloat(document.getElementById("up-y").value);
+            const upZ = parseFloat(document.getElementById("up-z").value);
+            const bukaanW = parseFloat(document.getElementById("bukaan-w").value); // ini dalam derajat
+            const bukaanH = parseFloat(document.getElementById("bukaan-h").value); // ini dalam derajat
+            const clipNear = parseFloat(document.getElementById("clip-near").value);
+            const clipFar = parseFloat(document.getElementById("clip-far").value);
+            //const elephant = { vertices: [ ["0.205629", "0.939785", "0.875132"] ], faces: [ ["513/1/1", "516/2/1", "446/3/1"] ] }
+            const model = elephant;
+            let vertices3d = model.vertices.map(v => {
+                return [v[0] * size + positionX, -v[1] * size + positionY, v[2] * size + positionZ]
+            })
+            let faces = model.faces
+            // 1. Hitung vektor arah (dari kamera ke posisi look-at)
+            let forward = [lookAtX - cameraX, lookAtY - cameraY, lookAtZ - cameraZ];
+
+            // 2. Normalisasi vektor forward
+            let norm = Math.sqrt(forward[0] * forward[0] + forward[1] * forward[1] + forward[2] * forward[2]);
+            forward = [forward[0] / norm, forward[1] / norm, forward[2] / norm];
+
+            // 3. Hitung vektor kanan (yang tegak lurus dengan forward dan up)
+            let right = [upY * forward[2] - upZ * forward[1], upZ * forward[0] - upX * forward[2], upX * forward[1] - upY * forward[0]];
+
+            // 4. Normalisasi vektor right
+            norm = Math.sqrt(right[0] * right[0] + right[1] * right[1] + right[2] * right[2]);
+            right = [right[0] / norm, right[1] / norm, right[2] / norm];
+
+            // 5. Hitung vektor up yang baru (yang tegak lurus dengan right dan forward)
+            let up = [right[1] * forward[2] - right[2] * forward[1], right[2] * forward[0] - right[0] * forward[2], right[0] * forward[1] - right[1] * forward[0]];
+
+            // 6. Buat matriks tampilan
+            let viewMatrix = [
+                [right[0], up[0], -forward[0], -cameraX],
+                [right[1], up[1], -forward[1], -cameraY],
+                [right[2], up[2], -forward[2], -cameraZ],
+                [0, 0, 0, 1]
+            ];
+
+            // 7. Konversi sudut bidang pandang dari derajat ke radian
+            let bukaanW_rad = bukaanW * Math.PI / 180;
+            let bukaanH_rad = bukaanH * Math.PI / 180;
+
+            // 8. Buat matriks proyeksi
+            let projectionMatrix = [
+                [1 / Math.tan(bukaanW_rad / 2), 0, 0, 0],
+                [0, 1 / Math.tan(bukaanH_rad / 2), 0, 0],
+                [0, 0, clipFar / (clipFar - clipNear), -clipNear * clipFar / (clipFar - clipNear)],
+                [0, 0, 1, 0]
+            ];
+
+            // 9. Kalikan matriks tampilan dan proyeksi
+            let vpMatrix = [];
+            for (let i = 0; i < 4; i++) {
+                vpMatrix[i] = [];
+                for (let j = 0; j < 4; j++) {
+                    vpMatrix[i][j] = 0;
+                    for (let k = 0; k < 4; k++) {
+                        vpMatrix[i][j] += projectionMatrix[i][k] * viewMatrix[k][j];
+                    }
+                }
+            }
+
+            function renderToCanvas(vertices2d, triangles, ctx) {
+                // Clear the canvas
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+                // Set the color of the fill
+                ctx.fillStyle = "#000000";
+
+                // Start the drawing path
+                ctx.beginPath();
+                // Iterate over the vertices
+                // for (const vertex of vertices2d) {
+                //     // Draw a rectangle at each vertex
+                //     ctx.fillRect((vertex[0] - size) / 2, (vertex[1] - size) / 2, 1, 1);
+                // }
+                // Iterate over the triangles
+                for (const triangle of triangles) {
+                    // Split the triangle string into vertex indices
+                    const indices = triangle.map(face => face.split('/')[0] - 1);
+
+                    // Move to the first vertex of the triangle
+                    ctx.moveTo(vertices2d[indices[0]][0], vertices2d[indices[0]][1]);
+                    // console.log(vertices2d[indices[0]][0], vertices2d[indices[0]][1])
+
+                    // Draw lines to the other vertices
+                    for (let i = 1; i < indices.length; i++) {
+                        ctx.lineTo(vertices2d[indices[i]][0], vertices2d[indices[i]][1]);
+                    }
+
+                    // Close the path
+                    ctx.closePath();
+                }
+
+                // Fill the path
+                ctx.fill();
+            }
+
+            // Ubah titik-titik 3D menjadi titik-titik 2D
+            let vertices2d = vertices3d.map(vertex => {
+                // Tambahkan komponen w=1 ke setiap titik
+                let vertex4d = [...vertex, 1];
+
+                // Kalikan titik dengan matriks vpMatrix
+                let result = [0, 0, 0, 0];
+                for (let i = 0; i < 4; i++) {
+                    for (let j = 0; j < 4; j++) {
+                        result[i] += vpMatrix[i][j] * vertex4d[j];
+                    }
+                }
+
+                // Bagi oleh komponen w untuk mendapatkan koordinat homogen, jika w bukan 0 atau 1
+                if (result[3] != 0 && result[3] != 1) {
+                    result = result.map(x => x / result[3]);
+                }
+
+                // Transformasi viewport: ubah koordinat klip ke koordinat layar
+                result[0] = result[0] * canvas.width / 2 + canvas.width / 2;
+                result[1] = result[1] * canvas.height / 2 + canvas.height / 2; // Y-axis is flipped in canvas
+
+                // Kembalikan hanya komponen x dan y
+                return result.slice(0, 2);
+            });
+
+            // Render ke canvas
+            renderToCanvas(vertices2d, faces, ctx);
+
+            console.log("object should be drawn");
+        }
+    </script>
+</body>
+
+</html>

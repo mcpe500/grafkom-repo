@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+            color: #333;
+        }
+
+        #myCanvas {
+            border: 3px solid #666;
+            float: left;
+            margin: 10px;
+            box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .main {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .main div {
+            margin: 10px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .main h3 {
+            border-bottom: 1px solid #666;
+            padding-bottom: 10px;
+        }
+
+        .main label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        .main input[type="number"] {
+            width: 60px;
+        }
+
+        button {
+            display: block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main">
+        <canvas id="myCanvas" width="1000" height="720"></canvas>
+        <div id="camera-position">
+            <h3>Camera Position</h3>
+            <label for="x">X: </label>
+            <input type="number" id="camera-x" value="1.0" />
+            <label for="y">Y: </label>
+            <input type="number" id="camera-y" value="1.0" />
+            <label for="z">Z: </label>
+            <input type="number" id="camera-z" value="1.0" />
+        </div>
+        <div id="lookat-position">
+            <h3>Look At Position</h3>
+            <label for="x">X: </label>
+            <input type="number" id="lookat-x" value="100.0" />
+            <label for="y">Y: </label>
+            <input type="number" id="lookat-y" value="0.0" />
+            <label for="z">Z: </label>
+            <input type="number" id="lookat-z" value="0.0" />
+        </div>
+        <div id="up-vector">
+            <h3>Up Vector</h3>
+            <input type="number" id="up-x" value="0.0" />
+            <input type="number" id="up-y" value="1.0" />
+            <input type="number" id="up-z" value="0.0" />
+        </div>
+        <div id="bukaan">
+            <h3>Bukaan</h3>
+            <p>Bukaan W :</p>
+            <input type="number" name="bukaan-w" id="bukaan-w" value="60.0" />
+            derajat
+            <p>Bukaan H :</p>
+            <input type="number" name="bukaan-h" id="bukaan-h" value="60.0" />
+            derajat
+        </div>
+        <div id="clip">
+            <h3>Clip</h3>
+            <p>Clip Near :</p>
+            <input type="number" name="clip-near" id="clip-near" value="1.0" />
+            <p>Clip Far :</p>
+            <input type="number" name="clip-far" id="clip-far" value="1000.0" />
+        </div>
+        <button onclick="drawCanvas()">Gambar</button>
+    </div>
+    <script src="./obj_files/Low Poly Elephant-blendswap.js"></script>
+    <script src="./utils.js"></script>
+    <script>
+        const canvas = document.getElementById("myCanvas");
+        const ctx = canvas.getContext("2d");
+        const size = 0.2;
+        const positionX = 1;
+        const positionY = 0.1;
+        const positionZ = 1;
+        //const elephant = { vertices: [ ["0.205629", "0.939785", "0.875132"] ], faces: [ ["513/1/1", "516/2/1", "446/3/1"] ] }
+        const model = elephant;
+        let vertices = model.vertices
+        let faces = model.faces
+        function drawCanvas() {
+            let t = [
+                [1, 0, 0, 0],
+                [0, 1, 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1]
+            ];
+            vertices = vertices.map((v) => {
+                return {
+                    x: v[0] * size + positionX,
+                    y: v[1] * size + positionY,
+                    z: v[2] * size + positionZ,
+                    w: 1,
+                };
+            });
+            const cameraX = parseFloat(document.getElementById("camera-x").value);
+            const cameraY = parseFloat(document.getElementById("camera-y").value);
+            const cameraZ = parseFloat(document.getElementById("camera-z").value);
+            const lookAtX = parseFloat(document.getElementById("lookat-x").value);
+            const lookAtY = parseFloat(document.getElementById("lookat-y").value);
+            const lookAtZ = parseFloat(document.getElementById("lookat-z").value);
+            const upX = parseFloat(document.getElementById("up-x").value);
+            const upY = parseFloat(document.getElementById("up-y").value);
+            const upZ = parseFloat(document.getElementById("up-z").value);
+            const bukaanW = parseFloat(document.getElementById("bukaan-w").value); // ini dalam derajat
+            const bukaanH = parseFloat(document.getElementById("bukaan-h").value); // ini dalam derajat
+            const clipNear = parseFloat(document.getElementById("clip-near").value);
+            const clipFar = parseFloat(document.getElementById("clip-far").value);
+
+
+            function identity(t) {
+                // Mengatur matriks t menjadi matriks identitas
+                for (let i = 0; i < t.length; i++) {
+                    for (let j = 0; j < t[i].length; j++) {
+                        if (i === j) {
+                            t[i][j] = 1;
+                        } else {
+                            t[i][j] = 0;
+                        }
+                    }
+                }
+            }
+
+            function translate(t, x, y, z) {
+                // Menggeser matriks t sejauh x, y, dan z
+                t[0][3] += x;
+                t[1][3] += y;
+                t[2][3] += z;
+            }
+
+            function scale(t, x, y, z) {
+                // Mengubah ukuran matriks t dengan faktor skala x, y, dan z
+                t[0][0] *= x;
+                t[1][1] *= y;
+                t[2][2] *= z;
+            }
+            function rotateX(t, angle) {
+                // Mengubah matriks t dengan rotasi sebesar angle seputar sumbu x
+                var rad = angle * Math.PI / 180;
+                var cos = Math.cos(rad);
+                var sin = Math.sin(rad);
+                t[1][1] = cos;
+                t[1][2] = -sin;
+                t[2][1] = sin;
+                t[2][2] = cos;
+            }
+
+            function rotateY(t, angle) {
+                // Mengubah matriks t dengan rotasi sebesar angle seputar sumbu y
+                var rad = angle * Math.PI / 180;
+                var cos = Math.cos(rad);
+                var sin = Math.sin(rad);
+                t[0][0] = cos;
+                t[0][2] = sin;
+                t[2][0] = -sin;
+                t[2][2] = cos;
+            }
+
+            function rotateZ(t, angle) {
+                // Mengubah matriks t dengan rotasi sebesar angle seputar sumbu z
+                var rad = angle * Math.PI / 180;
+                var cos = Math.cos(rad);
+                var sin = Math.sin(rad);
+                t[0][0] = cos;
+                t[0][1] = -sin;
+                t[1][0] = sin;
+                t[1][1] = cos;
+            } function gambargoblet() {
+                // Mengambil data vertex, melakukan transformasi dengan matriks transformasi gabungan 't'
+                // Menggambar di layar berdasarkan koordinat yang telah mengalami transformasi
+                for (let i = 0; i < faces.length; i++) {
+                    let p1 = parseInt(faces[i][0].split('/')[0]);
+                    let p2 = parseInt(faces[i][1].split('/')[0]);
+                    let p3 = parseInt(faces[i][2].split('/')[0]);
+
+                    let tmp1 = vertices[p1 - 1];
+                    let tmp2 = vertices[p2 - 1];
+                    let tmp3 = vertices[p3 - 1];
+
+                    // Transformasi dan proyeksi
+                    // Implementasi transformasi dan proyeksi di sini
+
+                    // Skala ke ukuran layar
+                    let LAYAR = 400;
+
+                    // Menggambar di layar
+                    ctx.beginPath();
+                    ctx.moveTo(tmp1.x / tmp1.z * LAYAR + 250, 250 - tmp1.y / tmp1.z * LAYAR);
+                    ctx.lineTo(tmp2.x / tmp2.z * LAYAR + 250, 250 - tmp2.y / tmp2.z * LAYAR);
+                    ctx.lineTo(tmp3.x / tmp3.z * LAYAR + 250, 250 - tmp3.y / tmp3.z * LAYAR);
+                    ctx.closePath();
+                    ctx.stroke();
+                }
+            }
+
+
+            function gambar3goblet() {
+
+                gambargoblet();
+
+            }
+            // Mengambil nilai dari elemen input
+            let campos = {
+                x: parseFloat(cameraX),
+                y: parseFloat(cameraY),
+                z: parseFloat(cameraZ)
+            };
+
+            let lookat = {
+                x: parseFloat(lookAtX),
+                y: parseFloat(lookAtY),
+                z: parseFloat(lookAtZ)
+            };
+
+            let up = {
+                x: parseFloat(upX),
+                y: parseFloat(upY),
+                z: parseFloat(upZ)
+            };
+
+            let tw = parseFloat(bukaanW);
+            let th = parseFloat(bukaanH);
+
+            let nearclip = parseFloat(clipNear);
+            let farclip = parseFloat(clipFar);
+
+
+
+            gambar3goblet();
+
+        }
+
+        drawCanvas(ctx);
+    </script>
+</body>
+
+</html>
