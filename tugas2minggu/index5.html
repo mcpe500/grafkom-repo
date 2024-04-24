@@ -70,11 +70,11 @@
         <div id="camera-position">
             <h3>Camera Position</h3>
             <label for="x">X: </label>
-            <input type="number" id="camera-x" value="1.0" />
+            <input type="number" id="camera-x" value="0.2" />
             <label for="y">Y: </label>
-            <input type="number" id="camera-y" value="1.0" />
+            <input type="number" id="camera-y" value="0.8" />
             <label for="z">Z: </label>
-            <input type="number" id="camera-z" value="1.0" />
+            <input type="number" id="camera-z" value="3.0" />
         </div>
         <div id="lookat-position">
             <h3>Look At Position</h3>
@@ -113,9 +113,9 @@
     <script src="./utils.js"></script>
     <script>
         const size = 1;
-        const positionX = 0;
-        const positionY = 0;
-        const positionZ = 0;
+        const positionX = 1;
+        const positionY = 1;
+        const positionZ = 1;
         function drawCanvas() {
             const canvas = document.getElementById('myCanvas');
             const ctx = canvas.getContext('2d');
@@ -167,6 +167,7 @@
             let bukaanW_rad = bukaanW * Math.PI / 180;
             let bukaanH_rad = bukaanH * Math.PI / 180;
 
+            console.log(clipFar, clipNear)
             // 8. Buat matriks proyeksi
             let projectionMatrix = [
                 [1 / Math.tan(bukaanW_rad / 2), 0, 0, 0],
@@ -174,6 +175,7 @@
                 [0, 0, clipFar / (clipFar - clipNear), -clipNear * clipFar / (clipFar - clipNear)],
                 [0, 0, 1, 0]
             ];
+            console.log(projectionMatrix)
 
             // 9. Kalikan matriks tampilan dan proyeksi
             let vpMatrix = [];
@@ -186,46 +188,6 @@
                     }
                 }
             }
-
-            // function renderToCanvas(vertices2d, triangles, ctx) {
-            //     // Clear the canvas
-            //     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-            //     // Set the color of the fill
-            //     ctx.fillStyle = "#000000";
-
-            //     // Start the drawing path
-            //     ctx.beginPath();
-            //     //const elephant = { vertices: [ ["0.205629", "0.939785", "0.875132"] ], faces: [ ["513/1/1", "516/2/1", "446/3/1"] ] }
-            //     // const model = elephant;
-            //     // let faces = model.faces
-            //     // Iterate over the vertices
-            //     for (const vertex of vertices2d) {
-            //         // Draw a rectangle at each vertex
-            //         ctx.fillRect((vertex[0] - size) / 2, (vertex[1] - size) / 2, 5, 5);
-            //     }
-            //     // Iterate over the triangles
-            //     // for (const triangle of triangles) {
-            //     //     // Split the triangle string into vertex indices
-            //     //     const indices = triangle.map(face => face.split('/')[0] - 1);
-
-            //     //     // Move to the first vertex of the triangle
-            //     //     ctx.moveTo(vertices2d[indices[0]][0], vertices2d[indices[0]][1]);
-            //     //     // console.log(vertices2d[indices[0]][0], vertices2d[indices[0]][1])
-
-            //     //     // Draw lines to the other vertices
-            //     //     for (let i = 1; i < indices.length; i++) {
-            //     //         ctx.lineTo(vertices2d[indices[i]][0], vertices2d[indices[i]][1]);
-            //     //     }
-
-            //     //     // Close the path
-            //     //     ctx.closePath();
-            //     // }
-
-            //     // Fill the path
-            //     ctx.fill();
-            // }
-
             function renderToCanvas(vertices2d, triangles, ctx) {
                 // Clear the canvas
                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -256,6 +218,43 @@
                     ctx.fill();
                 }
             }
+
+            // function renderToCanvas(vertices2d, triangles, ctx) {
+            //     // Clear the canvas
+            //     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+            //     // Set the color of the fill
+            //     ctx.fillStyle = "#000000";
+
+            //     // Iterate over the triangles
+            //     for (let i = 0; i < triangles.length; i++) {
+            //         // Get the indices of the vertices of the triangle
+            //         let indices = triangles[i].map(face => face.split('/')[0] - 1);
+
+            //         // Check if all vertices are within the clip range
+            //         if (indices.every(index => vertices2d[index][2] >= clipNear && vertices2d[index][2] <= clipFar)) {
+            //             // Start the drawing path
+            //             ctx.beginPath();
+
+            //             // Move to the first vertex of the triangle
+            //             ctx.moveTo(vertices2d[indices[0]][0], vertices2d[indices[0]][1]);
+
+            //             // Draw lines to the other vertices
+            //             for (let j = 1; j < indices.length; j++) {
+            //                 ctx.lineTo(vertices2d[indices[j]][0], vertices2d[indices[j]][1]);
+            //             }
+
+            //             // Close the path
+            //             ctx.closePath();
+
+            //             // Fill the path
+            //             ctx.fill();
+            //         }
+            //     }
+            // }
+
+
+
 
 
             // Ubah titik-titik 3D menjadi titik-titik 2D
@@ -289,6 +288,7 @@
 
             console.log("object should be drawn");
         }
+        drawCanvas()
     </script>
 </body>
 
