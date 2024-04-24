@@ -109,7 +109,8 @@
         </div>
         <button onclick="drawCanvas()">Gambar</button>
     </div>
-    <script src="./obj_files/Low Poly Elephant-blendswap.js"></script>
+    <script src="./obj_files/elephant.js"></script>
+    <script src="./obj_files/elephant.mtl.js"></script>
     <script src="./utils.js"></script>
     <script>
         const size = 1;
@@ -188,34 +189,92 @@
                     }
                 }
             }
-            function renderToCanvas(vertices2d, triangles, ctx) {
+            // function renderToCanvas(vertices2d, triangles, ctx) {
+            //     // Clear the canvas
+            //     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+            //     // Set the color of the fill
+            //     ctx.fillStyle = "#000000";
+
+            //     // Iterate over the triangles
+            //     for (let i = 0; i < triangles.length; i++) {
+            //         // Start the drawing path
+            //         ctx.beginPath();
+
+            //         // Get the indices of the vertices of the triangle
+            //         let indices = triangles[i].map(face => face.split('/')[0] - 1);
+
+            //         // Move to the first vertex of the triangle
+            //         ctx.moveTo(vertices2d[indices[0]][0], vertices2d[indices[0]][1]);
+
+            //         // Draw lines to the other vertices
+            //         for (let j = 1; j < indices.length; j++) {
+            //             ctx.lineTo(vertices2d[indices[j]][0], vertices2d[indices[j]][1]);
+            //         }
+
+            //         // Close the path
+            //         ctx.closePath();
+
+            //         // Fill the path
+            //         ctx.fill();
+            //     }
+            // }
+            function renderToCanvas(vertices2d, triangles, ctx, materials) {
                 // Clear the canvas
                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-                // Set the color of the fill
-                ctx.fillStyle = "#000000";
+                // // Set the color of the fill
+                // ctx.fillStyle = "#000000";
 
                 // Iterate over the triangles
                 for (let i = 0; i < triangles.length; i++) {
-                    // Start the drawing path
-                    ctx.beginPath();
-
                     // Get the indices of the vertices of the triangle
                     let indices = triangles[i].map(face => face.split('/')[0] - 1);
 
-                    // Move to the first vertex of the triangle
-                    ctx.moveTo(vertices2d[indices[0]][0], vertices2d[indices[0]][1]);
+                    // Check if all vertices are within the clip range
+                    let inClipRange = indices.every(index => {
+                        // Transform the 3D point to clip space
+                        let point = [...vertices3d[index], 1];
+                        let clipPoint = [0, 0, 0, 0];
+                        for (let i = 0; i < 4; i++) {
+                            for (let j = 0; j < 4; j++) {
+                                clipPoint[i] += vpMatrix[i][j] * point[j];
+                            }
+                        }
 
-                    // Draw lines to the other vertices
-                    for (let j = 1; j < indices.length; j++) {
-                        ctx.lineTo(vertices2d[indices[j]][0], vertices2d[indices[j]][1]);
+                        // Check if the z-coordinate is within the clip range
+                        return clipPoint[2] / clipPoint[3] >= clipNear && clipPoint[2] / clipPoint[3] <= clipFar;
+                    });
+
+                    if (inClipRange) {
+                        let materialName = triangles[i][0].split('/')[2];
+                        let material = materials[materialName];
+
+                        // Set the color of the fill to the diffuse color of the material, if it exists
+                        if (material) {
+                            ctx.fillStyle = `rgb(${material.Kd[0] * 255}, ${material.Kd[1] * 255}, ${material.Kd[2] * 255})`;
+                        } else {
+                            ctx.fillStyle = "#000000"; // Default color if material does not exist
+                        }
+
+                        // Set the color of the fill to the diffuse color of the material
+                        // Start the drawing path
+                        ctx.beginPath();
+
+                        // Move to the first vertex of the triangle
+                        ctx.moveTo(vertices2d[indices[0]][0], vertices2d[indices[0]][1]);
+
+                        // Draw lines to the other vertices
+                        for (let j = 1; j < indices.length; j++) {
+                            ctx.lineTo(vertices2d[indices[j]][0], vertices2d[indices[j]][1]);
+                        }
+
+                        // Close the path
+                        ctx.closePath();
+
+                        // Fill the path
+                        ctx.fill();
                     }
-
-                    // Close the path
-                    ctx.closePath();
-
-                    // Fill the path
-                    ctx.fill();
                 }
             }
 
@@ -283,8 +342,23 @@
                 return result.slice(0, 2);
             });
 
+            // Fungsi untuk menerapkan grading warna
+            function applyColorGrading(color, grading) {
+                return color.map(channel => Math.min(Math.max(channel * grading, 0), 1));
+            }
+
+            // Nilai grading warna
+            let colorGrading = 1.2; // Ubah nilai ini sesuai kebutuhan
+
+            // Terapkan grading warna ke setiap material dalam MTL
+            for (let materialName in elephantMTL) {
+                let material = elephantMTL[materialName];
+                material.Kd = applyColorGrading(material.Kd, colorGrading);
+            }
+
+
             // Render ke canvas
-            renderToCanvas(vertices2d, faces, ctx);
+            renderToCanvas(vertices2d, faces, ctx, elephantMTL);
 
             console.log("object should be drawn");
         }
