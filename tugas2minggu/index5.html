@@ -187,6 +187,45 @@
                 }
             }
 
+            // function renderToCanvas(vertices2d, triangles, ctx) {
+            //     // Clear the canvas
+            //     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+            //     // Set the color of the fill
+            //     ctx.fillStyle = "#000000";
+
+            //     // Start the drawing path
+            //     ctx.beginPath();
+            //     //const elephant = { vertices: [ ["0.205629", "0.939785", "0.875132"] ], faces: [ ["513/1/1", "516/2/1", "446/3/1"] ] }
+            //     // const model = elephant;
+            //     // let faces = model.faces
+            //     // Iterate over the vertices
+            //     for (const vertex of vertices2d) {
+            //         // Draw a rectangle at each vertex
+            //         ctx.fillRect((vertex[0] - size) / 2, (vertex[1] - size) / 2, 5, 5);
+            //     }
+            //     // Iterate over the triangles
+            //     // for (const triangle of triangles) {
+            //     //     // Split the triangle string into vertex indices
+            //     //     const indices = triangle.map(face => face.split('/')[0] - 1);
+
+            //     //     // Move to the first vertex of the triangle
+            //     //     ctx.moveTo(vertices2d[indices[0]][0], vertices2d[indices[0]][1]);
+            //     //     // console.log(vertices2d[indices[0]][0], vertices2d[indices[0]][1])
+
+            //     //     // Draw lines to the other vertices
+            //     //     for (let i = 1; i < indices.length; i++) {
+            //     //         ctx.lineTo(vertices2d[indices[i]][0], vertices2d[indices[i]][1]);
+            //     //     }
+
+            //     //     // Close the path
+            //     //     ctx.closePath();
+            //     // }
+
+            //     // Fill the path
+            //     ctx.fill();
+            // }
+
             function renderToCanvas(vertices2d, triangles, ctx) {
                 // Clear the canvas
                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -194,34 +233,30 @@
                 // Set the color of the fill
                 ctx.fillStyle = "#000000";
 
-                // Start the drawing path
-                ctx.beginPath();
-                // Iterate over the vertices
-                // for (const vertex of vertices2d) {
-                //     // Draw a rectangle at each vertex
-                //     ctx.fillRect((vertex[0] - size) / 2, (vertex[1] - size) / 2, 1, 1);
-                // }
                 // Iterate over the triangles
-                for (const triangle of triangles) {
-                    // Split the triangle string into vertex indices
-                    const indices = triangle.map(face => face.split('/')[0] - 1);
+                for (let i = 0; i < triangles.length; i++) {
+                    // Start the drawing path
+                    ctx.beginPath();
+
+                    // Get the indices of the vertices of the triangle
+                    let indices = triangles[i].map(face => face.split('/')[0] - 1);
 
                     // Move to the first vertex of the triangle
                     ctx.moveTo(vertices2d[indices[0]][0], vertices2d[indices[0]][1]);
-                    // console.log(vertices2d[indices[0]][0], vertices2d[indices[0]][1])
 
                     // Draw lines to the other vertices
-                    for (let i = 1; i < indices.length; i++) {
-                        ctx.lineTo(vertices2d[indices[i]][0], vertices2d[indices[i]][1]);
+                    for (let j = 1; j < indices.length; j++) {
+                        ctx.lineTo(vertices2d[indices[j]][0], vertices2d[indices[j]][1]);
                     }
 
                     // Close the path
                     ctx.closePath();
-                }
 
-                // Fill the path
-                ctx.fill();
+                    // Fill the path
+                    ctx.fill();
+                }
             }
+
 
             // Ubah titik-titik 3D menjadi titik-titik 2D
             let vertices2d = vertices3d.map(vertex => {
