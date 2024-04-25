@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', sans-serif;
+            background: linear-gradient(to right, #6dd5ed, #2193b0);
+            color: #333;
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .main {
+            background: #fff;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            width: 60%;
+            height: 100vh;
+            margin: auto;
+            animation: scaleUp 0.5s ease-in-out forwards;
+        }
+
+        @keyframes scaleUp {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        h3 {
+            font-size: 24px;
+            color: #2193b0;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            color: #666;
+        }
+
+        input[type="number"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            background-color: #2193b0;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #6dd5ed;
+        }
+
+        div[id$="-position"],
+        #up-vector,
+        #bukaan,
+        #clip {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        #bukaan p,
+        #clip p {
+            color: #333;
+            font-weight: bold;
+        }
+    </style>
+
+
+</head>
+
+<body>
+    <div class="main">
+        <canvas id="myCanvas" width="1000" height="720"></canvas>
+        <div id="camera-position">
+            <h3>Camera Position</h3>
+            <label for="x">X: </label>
+            <input type="number" id="camera-x" value="0.2" />
+            <label for="y">Y: </label>
+            <input type="number" id="camera-y" value="0.8" />
+            <label for="z">Z: </label>
+            <input type="number" id="camera-z" value="3.0" />
+        </div>
+        <div id="lookat-position">
+            <h3>Look At Position</h3>
+            <label for="x">X: </label>
+            <input type="number" id="lookat-x" value="100.0" />
+            <label for="y">Y: </label>
+            <input type="number" id="lookat-y" value="0.0" />
+            <label for="z">Z: </label>
+            <input type="number" id="lookat-z" value="0.0" />
+        </div>
+        <div id="up-vector">
+            <h3>Up Vector</h3>
+            <input type="number" id="up-x" value="0.0" />
+            <input type="number" id="up-y" value="1.0" />
+            <input type="number" id="up-z" value="0.0" />
+        </div>
+        <div id="bukaan">
+            <h3>Bukaan</h3>
+            <p>Bukaan W :</p>
+            <input type="number" name="bukaan-w" id="bukaan-w" value="60.0" />
+            derajat
+            <p>Bukaan H :</p>
+            <input type="number" name="bukaan-h" id="bukaan-h" value="60.0" />
+            derajat
+        </div>
+        <div id="clip">
+            <h3>Clip</h3>
+            <p>Clip Near :</p>
+            <input type="number" name="clip-near" id="clip-near" value="1.0" />
+            <p>Clip Far :</p>
+            <input type="number" name="clip-far" id="clip-far" value="1000.0" />
+        </div>
+        <button onclick="drawCanvas()">Gambar</button>
+    </div>
+    <script src="./obj_files/Lowpoly_tree_sample.obj.js"></script>
+    <script src="./obj_files/Lowpoly_tree_sample.mtl.js"></script>
+    <script src="./utils.js"></script>
+    <script>
+        const size = 0.1;
+        const positionX = 1;
+        const positionY = 1;
+        const positionZ = 1;
+        function drawCanvas() {
+            const canvas = document.getElementById('myCanvas');
+            const ctx = canvas.getContext('2d');
+            const cameraX = parseFloat(document.getElementById("camera-x").value);
+            const cameraY = parseFloat(document.getElementById("camera-y").value);
+            const cameraZ = parseFloat(document.getElementById("camera-z").value);
+            const lookAtX = parseFloat(document.getElementById("lookat-x").value);
+            const lookAtY = parseFloat(document.getElementById("lookat-y").value);
+            const lookAtZ = parseFloat(document.getElementById("lookat-z").value);
+            const upX = parseFloat(document.getElementById("up-x").value);
+            const upY = parseFloat(document.getElementById("up-y").value);
+            const upZ = parseFloat(document.getElementById("up-z").value);
+            const bukaanW = parseFloat(document.getElementById("bukaan-w").value); // ini dalam derajat
+            const bukaanH = parseFloat(document.getElementById("bukaan-h").value); // ini dalam derajat
+            const clipNear = parseFloat(document.getElementById("clip-near").value);
+            const clipFar = parseFloat(document.getElementById("clip-far").value);
+            //const elephant = { vertices: [ ["0.205629", "0.939785", "0.875132"] ], faces: [ ["513/1/1", "516/2/1", "446/3/1"] ] }
+            const model = tree;
+            const mtlModel = treemtl
+            let vertices3d = model.vertices.map(v => {
+                return [v[0] * size + positionX, -v[1] * size + positionY, v[2] * size + positionZ]
+            })
+            let faces = model.faces
+            // 1. Hitung vektor arah (dari kamera ke posisi look-at)
+            let forward = [lookAtX - cameraX, lookAtY - cameraY, lookAtZ - cameraZ];
+
+            // 2. Normalisasi vektor forward
+            let norm = Math.sqrt(forward[0] * forward[0] + forward[1] * forward[1] + forward[2] * forward[2]);
+            forward = [forward[0] / norm, forward[1] / norm, forward[2] / norm];
+
+            // 3. Hitung vektor kanan (yang tegak lurus dengan forward dan up)
+            let right = [upY * forward[2] - upZ * forward[1], upZ * forward[0] - upX * forward[2], upX * forward[1] - upY * forward[0]];
+
+            // 4. Normalisasi vektor right
+            norm = Math.sqrt(right[0] * right[0] + right[1] * right[1] + right[2] * right[2]);
+            right = [right[0] / norm, right[1] / norm, right[2] / norm];
+
+            // 5. Hitung vektor up yang baru (yang tegak lurus dengan right dan forward)
+            let up = [right[1] * forward[2] - right[2] * forward[1], right[2] * forward[0] - right[0] * forward[2], right[0] * forward[1] - right[1] * forward[0]];
+
+            // 6. Buat matriks tampilan
+            let viewMatrix = [
+                [right[0], up[0], -forward[0], -cameraX],
+                [right[1], up[1], -forward[1], -cameraY],
+                [right[2], up[2], -forward[2], -cameraZ],
+                [0, 0, 0, 1]
+            ];
+
+            // 7. Konversi sudut bidang pandang dari derajat ke radian
+            let bukaanW_rad = bukaanW * Math.PI / 180;
+            let bukaanH_rad = bukaanH * Math.PI / 180;
+
+            // 8. Buat matriks proyeksi
+            let projectionMatrix = [
+                [1 / Math.tan(bukaanW_rad / 2), 0, 0, 0],
+                [0, 1 / Math.tan(bukaanH_rad / 2), 0, 0],
+                [0, 0, clipFar / (clipFar - clipNear), -clipNear * clipFar / (clipFar - clipNear)],
+                [0, 0, 1, 0]
+            ];
+            // 9. Kalikan matriks tampilan dan proyeksi
+            let vpMatrix = [];
+            for (let i = 0; i < 4; i++) {
+                vpMatrix[i] = [];
+                for (let j = 0; j < 4; j++) {
+                    vpMatrix[i][j] = 0;
+                    for (let k = 0; k < 4; k++) {
+                        vpMatrix[i][j] += projectionMatrix[i][k] * viewMatrix[k][j];
+                    }
+                }
+            }
+            function renderToCanvas(vertices2d, triangles, ctx, materials) {
+                const materials_used = []
+                // Clear the canvas
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+                // Iterate over the triangles
+                for (let i = 0; i < triangles.length; i++) {
+                    // Get the indices of the vertices of the triangle
+                    let indices = triangles[i].map(face => {
+                        return face.split('/')[0] - 1
+                    }).filter(i => {
+                        return !isNaN(i)
+                    });
+
+                    // Check if all vertices are within the clip range
+                    let inClipRange = indices.every(index => {
+
+                        // Transform the 3D point to clip space)
+                        let point = [...vertices3d[index], 1];
+                        let clipPoint = [0, 0, 0, 0];
+                        for (let i = 0; i < 4; i++) {
+                            for (let j = 0; j < 4; j++) {
+                                clipPoint[i] += vpMatrix[i][j] * point[j];
+                            }
+                        }
+
+                        // Check if the z-coordinate is within the clip range
+                        return clipPoint[2] / clipPoint[3] >= clipNear && clipPoint[2] / clipPoint[3] <= clipFar;
+                    });
+
+                    if (inClipRange) {
+                        // console.log("indices = ",indices,"triangles = ",triangles)
+                        const triangle = triangles[i]
+                        // console.log(triangles[i])
+                        // // Dapatkan nama material dari wajah saat ini
+                        let materialName = triangles[i][triangles[i].length - 1];
+                        // Dapatkan material dari objek elephantMTL
+                        materials_used.push(triangles[i])
+                        let material = mtlModel[materialName];
+                        // Ubah ctx.fillStyle menjadi warna diffuse (Kd) dari material
+                        // Anda perlu mengubah array [R, G, B] menjadi string 'rgb(R, G, B)'
+                        ctx.fillStyle = `rgb(${material.Kd[0] * 255}, ${material.Kd[1] * 255}, ${material.Kd[2] * 255})`;
+
+                        // Set the color of the fill to the diffuse color of the material
+                        // Start the drawing path
+                        ctx.beginPath();
+
+                        // Move to the first vertex of the triangle
+                        ctx.moveTo(vertices2d[indices[0]][0], vertices2d[indices[0]][1]);
+
+                        // Draw lines to the other vertices
+                        for (let j = 1; j < indices.length; j++) {
+                            ctx.lineTo(vertices2d[indices[j]][0], vertices2d[indices[j]][1]);
+                        }
+
+                        // Close the path
+                        ctx.closePath();
+
+                        // Fill the path
+                        ctx.fill();
+                    }
+                }
+                console.log(materials_used)
+            }
+
+
+            // Ubah titik-titik 3D menjadi titik-titik 2D
+            let vertices2d = vertices3d.map(vertex => {
+                // Tambahkan komponen w=1 ke setiap titik
+                let vertex4d = [...vertex, 1];
+
+                // Kalikan titik dengan matriks vpMatrix
+                let result = [0, 0, 0, 0];
+                for (let i = 0; i < 4; i++) {
+                    for (let j = 0; j < 4; j++) {
+                        result[i] += vpMatrix[i][j] * vertex4d[j];
+                    }
+                }
+
+                // Bagi oleh komponen w untuk mendapatkan koordinat homogen, jika w bukan 0 atau 1
+                if (result[3] != 0 && result[3] != 1) {
+                    result = result.map(x => x / result[3]);
+                }
+
+                // Transformasi viewport: ubah koordinat klip ke koordinat layar
+                result[0] = result[0] * canvas.width / 2 + canvas.width / 2;
+                result[1] = result[1] * canvas.height / 2 + canvas.height / 2; // Y-axis is flipped in canvas
+
+                // Kembalikan hanya komponen x dan y
+                return result.slice(0, 2);
+            });
+
+            // Fungsi untuk menerapkan grading warna
+            // function applyColorGrading(color, grading) {
+            //     return color.map(channel => Math.min(Math.max(channel * grading, 0), 1));
+            // }
+
+            // // Nilai grading warna
+            // let colorGrading = 0.8; // Ubah nilai ini sesuai kebutuhan
+
+            // // Terapkan grading warna ke setiap material dalam MTL
+            // for (let materialName in elephantMTL) {
+            //     let material = elephantMTL[materialName];
+            //     // console.log("prevmaterial", material)
+            //     material.Kd = applyColorGrading(material.Kd, colorGrading);
+            //     // console.log("aftermaterial", material)
+            // }
+
+
+            // Render ke canvas
+            renderToCanvas(vertices2d, faces, ctx, mtlModel);
+
+            console.log("object should be drawn");
+        }
+        drawCanvas()
+    </script>
+</body>
+
+</html>

@@ -29,4 +29,4 @@ def convert_mtl_to_json(mtl_file, json_file):
         json.dump(material_dict, f)
 
 
-convert_mtl_to_json('./obj_files/elephant.mtl', './obj_files/elephant.mtl.json')
+convert_mtl_to_json('./obj_files/Godzilla/godzilla.mtl', './obj_files/godzilla.mtl.json')
