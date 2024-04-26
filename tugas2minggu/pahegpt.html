@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+        #myCanvas {
+            border: 1px solid black;
+            float: left;
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main">
+        <canvas id="myCanvas" width="1000" height="720"></canvas>
+        <div id="camera-position">
+            <h3>Camera Position</h3>
+            <label for="x">X: </label>
+            <input type="number" id="camera-x" value="1.0" />
+            <label for="y">Y: </label>
+            <input type="number" id="camera-y" value="1.0" />
+            <label for="z">Z: </label>
+            <input type="number" id="camera-z" value="1.0" />
+        </div>
+        <div id="lookat-position">
+            <h3>Look At Position</h3>
+            <label for="x">X: </label>
+            <input type="number" id="lookat-x" value="100.0" />
+            <label for="y">Y: </label>
+            <input type="number" id="lookat-y" value="0.0" />
+            <label for="z">Z: </label>
+            <input type="number" id="lookat-z" value="0.0" />
+        </div>
+        <div id="up-vector">
+            <h3>Up Vector</h3>
+            <input type="number" id="up-x" value="0.0" />
+            <input type="number" id="up-y" value="1.0" />
+            <input type="number" id="up-z" value="0.0" />
+        </div>
+        <div id="bukaan">
+            <h3>Bukaan</h3>
+            <p>Bukaan W :</p>
+            <input type="number" name="bukaan-w" id="bukaan-w" value="60.0" />
+            derajat
+            <p>Bukaan H :</p>
+            <input type="number" name="bukaan-h" id="bukaan-h" value="60.0" />
+            derajat
+        </div>
+        <div id="clip">
+            <h3>Clip</h3>
+            <p>Clip Near :</p>
+            <input type="number" name="clip-near" id="clip-near" value="1.0" />
+            <p>Clip Far :</p>
+            <input type="number" name="clip-far" id="clip-far" value="1000.0" />
+        </div>
+        <button onclick="drawCanvas(ctx)">Gambar</button>
+    </div>
+    <script src="./obj_files/Low Poly Elephant-blendswap.js"></script>
+    <script>
+        const canvas = document.getElementById("myCanvas");
+        const ctx = canvas.getContext("2d");
+        const size = 10;
+        const positionX = 0;
+        const positionY = 0;
+        const positionZ = 0;
+        const model = elephant;
+
+        // // mtlModel
+
+        // // Fungsi bantu untuk perkalian matriks
+        // function matrixMultiply(A, B) {
+        //     const result = [
+        //         [0, 0, 0, 0],
+        //         [0, 0, 0, 0],
+        //         [0, 0, 0, 0],
+        //         [0, 0, 0, 0]
+        //     ];
+        //     // console.log(result)
+        //     for (let i = 0; i < 4; i++) {
+        //         for (let j = 0; j < 4; j++) {
+        //             for (let k = 0; k < 4; k++) {
+        //                 result[i][j] += A[i][k] * B[k][j];
+        //             }
+        //         }
+        //     }
+
+        //     return result;
+        // }
+        // // Fungsi bantu untuk menghitung cross product
+        // function cross(vector1, vector2) {
+        //     return [
+        //         vector1[1] * vector2[2] - vector1[2] * vector2[1],
+        //         vector1[2] * vector1[0] - vector1[0] * vector2[2],
+        //         vector1[0] * vector2[1] - vector1[1] * vector2[0]
+        //     ];
+        // }
+
+        // // Fungsi bantu untuk normalisasi vektor
+        // function normalize(vector) {
+        //     let length = Math.sqrt(vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2]);
+        //     return [vector[0] / length, vector[1] / length, vector[2] / length];
+        // }
+
+        // // Fungsi untuk menghitung matriks transformasi kamera kanon
+        // // Fungsi untuk menghitung matriks transformasi kamera kanon
+        // function calculateCameraMatrix(cameraX, cameraY, cameraZ, lookAtX, lookAtY, lookAtZ, upX, upY, upZ) {
+        //     // Buat matriks identitas 4x4
+        //     let transformMatrix = Array.from({ length: 4 }, () => Array(4).fill(0));
+        //     for (let i = 0; i < 4; i++) {
+        //         transformMatrix[i][i] = 1;
+        //     }
+
+        //     // Terjemahkan kamera ke asal (0, 0, 0)
+        //     transformMatrix[3] = [-cameraX, -cameraY, -cameraZ, 1];
+
+        //     // Putar kamera ke arah negatif sumbu Z
+        //     let rotZMatrix = [
+        //         [0, -1, 0, 0],
+        //         [1, 0, 0, 0],
+        //         [0, 0, 1, 0],
+        //         [0, 0, 0, 1]
+        //     ];
+        //     transformMatrix = matrixMultiply(transformMatrix, rotZMatrix);
+
+        //     // Skalakan kamera
+        //     let scaleMatrix = [
+        //         [0.5, 0, 0, 0],
+        //         [0, 0.5, 0, 0],
+        //         [0, 0, 0.5, 0],
+        //         [0, 0, 0, 1]
+        //     ];
+        //     transformMatrix = matrixMultiply(transformMatrix, scaleMatrix);
+
+        //     // Hitung vektor "look" dan normalisasikan
+        //     let lookVector = [lookAtX - cameraX, lookAtY - cameraY, lookAtZ - cameraZ];
+        //     let lookLength = Math.sqrt(lookVector[0] * lookVector[0] + lookVector[1] * lookVector[1] + lookVector[2] * lookVector[2]);
+        //     let lookNormalized = [lookVector[0] / lookLength, lookVector[1] / lookLength, lookVector[2] / lookLength];
+
+        //     // Hitung vektor "up" dan pastikan tidak sejajar dengan "look"
+        //     let upVector = [upX, upY, upZ];
+        //     let crossProduct = cross(lookNormalized, upVector);
+        //     if (crossProduct[0] * crossProduct[0] + crossProduct[1] * crossProduct[1] + crossProduct[2] * crossProduct[2] < 1e-6) {
+        //         upVector = [0, 1, 0];
+        //     }
+        //     upVector = normalize(upVector);
+
+        //     // Hitung vektor "right" menggunakan cross product
+        //     let rightVector = cross(lookNormalized, upVector);
+
+        //     // Buat matriks view dari vektor-vektor basis
+        //     let viewMatrix = [
+        //         [rightVector[0], upVector[0], lookNormalized[0], 0],
+        //         [rightVector[1], upVector[1], lookNormalized[1], 0],
+        //         [rightVector[2], upVector[2], lookNormalized[2], 0],
+        //         [0, 0, 0, 1]
+        //     ];
+
+        //     // Gabungkan matriks transformasi dan view
+
+        //     let cameraMatrix = matrixMultiply(transformMatrix, viewMatrix);
+
+        //     return cameraMatrix;
+
+        // }
+        // function matrixVectorMultiply(matrix, vector) {
+        //     let result = [0, 0, 0, 0];
+        //     for (let i = 0; i < 4; i++) {
+        //         for (let j = 0; j < 4; j++) {
+        //             result[i] += matrix[i][j] * vector[j];
+        //         }
+        //     }
+        //     return result;
+        // }
+
+        // // Fungsi untuk memproyeksi dan merender objek 3D ke kanvas
+        // function renderObject(vertices, faces, cameraMatrix) {
+        //     // Buat array untuk menyimpan titik-titik vertex 2D yang diproyeksikan
+        //     let projectedVertices = [];
+
+        //     // Terapkan matriks kamera pada setiap titik vertex
+        //     for (let i = 0; i < vertices.length; i++) {
+        //         let vertex = [vertices[i].x, vertices[i].y, vertices[i].z, 1];
+        //         // console.log(cameraMatrix, vertex)
+        //         let transformedVertex = matrixVectorMultiply(cameraMatrix, vertex);
+        //         // console.log(transformedVertex)
+        //         projectedVertices.push([transformedVertex[0] / transformedVertex[3], transformedVertex[1] / transformedVertex[3]]);
+        //         // console.log(projectedVertices)
+        //     }
+
+        //     // Buat array untuk menyimpan segitiga-segitiga yang akan dirender
+        //     let triangles = [];
+
+        //     // Iterasi melalui wajah-wajah objek
+        //     for (let face of faces) {
+        //         // Asumsikan setiap wajah adalah segitiga
+        //         let indices = [parseInt(face[0].split("/")[0]) - 1, parseInt(face[1].split("/")[0]) - 1, parseInt(face[2].split("/")[0]) - 1];
+
+        //         // Dapatkan nama material dari wajah saat ini
+        //         let materialName = face[face.length - 1];
+
+        //         // Dapatkan nilai Kd dari objek mtlModel
+        //         // let materialKd = mtlModel[materialName].Kd;
+
+        //         // Ubah nilai Kd ke format string RGB
+        //         // let fillStyle = `rgb(${materialKd[0] * 255}, ${materialKd[1] * 255}, ${materialKd[2] * 255})`;
+        //         let fillStyle = `rgb(0,0,0)`;
+
+        //         // Buat array untuk menyimpan titik-titik vertex 2D yang diproyeksikan untuk segitiga saat ini
+        //         let triangleVertices = indices.map(index => projectedVertices[index]);
+        //         // console.log(indices[0] - 1)
+        //         // console.log(projectedVertices[indices[0]-1])
+        //         // console.log(projectedVertices)
+
+        //         // Tambahkan segitiga ke array segitiga
+        //         triangles.push({ vertices: triangleVertices, fillStyle: fillStyle });
+        //     }
+
+        //     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+        //     // Iterasi melalui segitiga-segitiga
+        //     for (let triangle of triangles) {
+        //         // Mulai jalur gambar
+        //         ctx.beginPath();
+
+        //         // Pindahkan kursor ke titik vertex pertama segitiga
+        //         // console.log(triangle)
+        //         ctx.moveTo(triangle.vertices[0][0], triangle.vertices[0][1]);
+
+        //         // Gambarkan garis ke titik-titik vertex lainnya
+        //         for (let j = 1; j < triangle.vertices.length; j++) {
+        //             // console.log(triangle.vertices[j][0], triangle.vertices[j][1])
+        //             ctx.lineTo(-triangle.vertices[j][0], triangle.vertices[j][1]);
+        //         }
+
+        //         // Tutup jalur
+        //         ctx.closePath();
+
+        //         // Isi jalur dengan warna dari material
+        //         ctx.fillStyle = triangle.fillStyle;
+        //         ctx.fill();
+        //     }
+        // }
+        function multiplyMatrices(a, b) {
+            const result = [];
+            // console.log(a, b)
+            for (let i = 0; i < a.length; i++) {
+                result[i] = [];
+                for (let j = 0; j < b[0].length; j++) {
+                    let sum = 0;
+                    for (let k = 0; k < a[0].length; k++) {
+                        sum +=
+                            a[i][k] *
+                            (b[k] ? b[k][j] : 1);
+                    }
+                    result[i][j] = sum;
+                }
+            }
+            return result;
+        }
+
+        // function multiplyMatrixVector(matrix, vector) {
+        //     const result = [0, 0, 0, 0];
+        //     console.log(vector)
+        //     for (let i = 0; i < matrix.length; i++) {
+        //         for (let j = 0; j < matrix[0].length; j++) {
+        //             // console.log(matrix[0][j], vector[Object.keys(vector)[j]])
+        //             result[i] += matrix[i][j] * vector[Object.keys(vector)[j]];
+        //         }
+        //     }
+        //     return result;
+        // }
+
+        function multiplyMatrixVector(matrix, vector) {
+            const result = [0, 0, 0, 0];
+            for (let i = 0; i < matrix.length; i++) {
+                for (let j = 0; j < matrix[0].length; j++) {
+                    result[i] += matrix[i][j] * vector[Object.keys(vector)[j]];
+                }
+            }
+            const w = result[3];
+            return [result[0] / w, result[1] / w, result[2] / w, w];
+        }
+
+        function drawModel(
+            vertices,
+            faces,
+            cameraMatrix,
+            perspectiveMatrix,
+            canvasContext
+        ) {
+            // Bersihkan canvas
+            canvasContext.clearRect(
+                0,
+                0,
+                canvasContext.canvas.width,
+                canvasContext.canvas.height
+            );
+
+            // Iterasi melalui setiap wajah
+            for (const face of faces) {
+                // console.log(face)
+                // Dapatkan indeks vertex untuk wajah ini
+                const [v1, v2, v3] = face.map((vertex) => parseInt(vertex.split("/")[0]));
+                // console.log(v1)
+
+                // Dapatkan koordinat vertex dalam ruang dunia
+                // console.log(vertices[v1])
+                const worldPos1 = multiplyMatrixVector(
+                    cameraMatrix,
+                    vertices[v1 - 1]
+                );
+                // console.log(
+                //     cameraMatrix,
+                //     vertices[v1 - 1])
+                const worldPos2 = multiplyMatrixVector(
+                    cameraMatrix,
+                    vertices[v2 - 1]
+                );
+                const worldPos3 = multiplyMatrixVector(
+                    cameraMatrix,
+                    vertices[v3 - 1]
+                );
+
+                // Proyeksikan koordinat vertex ke ruang layar
+                const screenPos1 = multiplyMatrixVector(perspectiveMatrix, worldPos1)
+                // .map(sp => sp < 0 ? sp * -1 : sp);
+                const screenPos2 = multiplyMatrixVector(perspectiveMatrix, worldPos2)
+                // .map(sp => sp < 0 ? sp * -1 : sp);
+                const screenPos3 = multiplyMatrixVector(perspectiveMatrix, worldPos3)
+                // .map(sp => sp < 0 ? sp * -1 : sp);
+                // Gambar wajah pada canvas
+
+                canvasContext.beginPath();
+                canvasContext.moveTo(
+                    screenPos1[0] / screenPos1[3],
+                    screenPos1[1] / screenPos1[3]
+                );
+                canvasContext.lineTo(
+                    screenPos2[0] / screenPos2[3],
+                    screenPos2[1] / screenPos2[3]
+                );
+                canvasContext.lineTo(
+                    screenPos3[0] / screenPos3[3],
+                    screenPos3[1] / screenPos3[3]
+                );
+                canvasContext.closePath();
+                canvasContext.stroke();
+            }
+        }
+        function convertToCanonCamera(
+            cameraPosition,
+            lookAt,
+            up,
+            fov,
+            aspect,
+            near,
+            far
+        ) {
+            // Hitung matriks rotasi
+            const rotationMatrix = calculateRotationMatrix([
+                lookAt[0] - cameraPosition[0],
+                lookAt[1] - cameraPosition[1],
+                lookAt[2] - cameraPosition[2],
+            ]);
+
+            // Hitung matriks scaling
+            const scalingMatrix = calculateScalingMatrix(1, 1, -1);
+
+            // Hitung matriks perspektif
+            const perspectiveMatrix = calculatePerspectiveMatrix(
+                fov,
+                aspect,
+                near,
+                far
+            );
+
+            // Hitung matriks kamera
+            const cameraMatrix = calculateCameraMatrix(cameraPosition, lookAt, up);
+
+            // Gabungkan matriks transformasi
+            const transformedCameraMatrix = multiplyMatrices(
+                cameraMatrix,
+                multiplyMatrices(scalingMatrix, rotationMatrix)
+            );
+
+            return transformedCameraMatrix;
+        }
+        function calculateCameraMatrix(cameraPosition, lookAt, up) {
+            // Normalisasi look vector
+            const lookVector = [
+                lookAt[0] - cameraPosition[0],
+                lookAt[1] - cameraPosition[1],
+                lookAt[2] - cameraPosition[2],
+            ];
+            const lookNorm = Math.sqrt(
+                lookVector[0] * lookVector[0] +
+                lookVector[1] * lookVector[1] +
+                lookVector[2] * lookVector[2]
+            );
+            const lx = lookVector[0] / lookNorm;
+            const ly = lookVector[1] / lookNorm;
+            const lz = lookVector[2] / lookNorm;
+
+            // Normalisasi up vector
+            const upNorm = Math.sqrt(up[0] * up[0] + up[1] * up[1] + up[2] * up[2]);
+            const ux = up[0] / upNorm;
+            const uy = up[1] / upNorm;
+            const uz = up[2] / upNorm;
+
+            // Hitung vektor u (right)
+            const ux_ = ly * uz - lz * uy;
+            const uy_ = lz * ux - lx * uz;
+            const uz_ = lx * uy - ly * ux;
+
+            // Hitung matriks kamera
+            const cameraMatrix = [
+                [
+                    ux_,
+                    uy_,
+                    uz_,
+                    -ux_ * cameraPosition[0] -
+                    uy_ * cameraPosition[1] -
+                    uz_ * cameraPosition[2],
+                ],
+                [
+                    ux,
+                    uy,
+                    uz,
+                    -(
+                        ux * cameraPosition[0] +
+                        uy * cameraPosition[1] +
+                        uz * cameraPosition[2]
+                    ),
+                ],
+                [
+                    lx,
+                    ly,
+                    lz,
+                    -(
+                        lx * cameraPosition[0] +
+                        ly * cameraPosition[1] +
+                        lz * cameraPosition[2]
+                    ),
+                ],
+                [0, 0, 0, 1],
+            ];
+
+            return cameraMatrix;
+        }
+        function calculatePerspectiveMatrix(fov, aspect, near, far) {
+            const f = 1.0 / Math.tan((fov * Math.PI) / 360.0);
+            const q = far / (far - near);
+
+            const perspectiveMatrix = [
+                [f / aspect, 0, 0, 0],
+                [0, f, 0, 0],
+                [0, 0, q, 1],
+                [0, 0, -near * q, 0],
+            ];
+
+            return perspectiveMatrix;
+        }
+        function calculateScalingMatrix(scaleX, scaleY, scaleZ) {
+            const scalingMatrix = [
+                [1 / scaleX, 0, 0],
+                [0, 1 / scaleY, 0],
+                [0, 0, 1 / scaleZ],
+            ];
+
+            return scalingMatrix;
+        }
+        function calculateRotationMatrix(lookVector) {
+            // Normalisasi look vector
+            const lookNorm = Math.sqrt(
+                lookVector[0] * lookVector[0] +
+                lookVector[1] * lookVector[1] +
+                lookVector[2] * lookVector[2]
+            );
+            const nx = -lookVector[0] / lookNorm;
+            const ny = -lookVector[1] / lookNorm;
+            const nz = -lookVector[2] / lookNorm;
+
+            // Hitung matriks rotasi
+            const rotationMatrix = [
+                [nx, ny, nz],
+                [ny, -nx, 0],
+                [0, nz, -nx],
+            ];
+
+            return rotationMatrix;
+        }
+        // Fungsi untuk menangani input dan rendering
+        function drawCanvas() {
+            const cameraX = parseFloat(document.getElementById("camera-x").value);
+            const cameraY = parseFloat(document.getElementById("camera-y").value);
+            const cameraZ = parseFloat(document.getElementById("camera-z").value);
+            const lookAtX = parseFloat(document.getElementById("lookat-x").value);
+            const lookAtY = parseFloat(document.getElementById("lookat-y").value);
+            const lookAtZ = parseFloat(document.getElementById("lookat-z").value);
+            const upX = parseFloat(document.getElementById("up-x").value);
+            const upY = parseFloat(document.getElementById("up-y").value);
+            const upZ = parseFloat(document.getElementById("up-z").value);
+            const bukaanW = parseFloat(document.getElementById("bukaan-w").value); // dalam derajat
+            const bukaanH = parseFloat(document.getElementById("bukaan-h").value); // dalam derajat
+            const clipNear = parseFloat(document.getElementById("clip-near").value);
+            const clipFar = parseFloat(document.getElementById("clip-far").value);
+
+            let vertices = model.vertices.map((v) => {
+                return {
+                    x: parseFloat(v[0]) * size + positionX,
+                    y: parseFloat(v[1]) * size + positionY,
+                    z: parseFloat(v[2]) * size + positionZ,
+                    w: 1,
+                };
+            });
+
+            let faces = model.faces;
+            // // Hitung matriks transformasi kamera kanon
+            // let cameraMatrix = calculateCameraMatrix(cameraX, cameraY, cameraZ, lookAtX, lookAtY, lookAtZ, upX, upY, upZ);
+
+            // // Render objek 3D ke kanvas
+            // renderObject(vertices, faces, cameraMatrix);
+            // Dapatkan input dari pengguna
+            const cameraPosition = [cameraX, cameraY, cameraZ];
+            const lookAt = [lookAtX, lookAtY, lookAtZ];
+            const up = [upX, upY, upZ];
+            const fov = bukaanW; // dalam derajat
+            const aspect = canvas.width / canvas.height;
+            const near = clipNear;
+            const far = clipFar;
+
+            // Ubah kamera sembarang menjadi kamera Canon
+            const transformedCameraMatrix = convertToCanonCamera(cameraPosition, lookAt, up, fov, aspect, near, far);
+
+            // Hitung matriks perspektif
+            const perspectiveMatrix = calculatePerspectiveMatrix(fov, aspect, near, far);
+
+            // Gambar model 3D pada canvas
+            // console.log(faces)
+            drawModel(vertices, faces, transformedCameraMatrix, perspectiveMatrix, ctx);
+            console.log("object rendered");
+        }
+
+        // Panggil fungsi drawCanvas saat halaman dimuat
+        window.onload = function () {
+            drawCanvas();
+        };
+    </script>
+</body>
+
+</html>

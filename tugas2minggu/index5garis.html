@@ -111,9 +111,8 @@
     </div>
     <!-- <script src="./obj_files/godzilla.obj.js"></script>
     <script src="./obj_files/godzilla.mtl.js"></script> -->
-    <script src="./obj_files/Lowpoly_tree_sample.mtl.js"></script>
     <script src="./obj_files/Lowpoly_tree_sample.obj.js"></script>
-    <!-- <script src="./obj_files/Lowpoly_tree_sample.mtl.js"></script> -->
+    <script src="./obj_files/Lowpoly_tree_sample.mtl.js"></script>
     <script src="./utils.js"></script>
     <script>
         const size = 0.1;
@@ -242,16 +241,16 @@
 
                     if (inClipRange) {
                         // console.log("indices = ",indices,"triangles = ",triangles)
-                        const triangle = triangles[i]
-                        // console.log(triangles[i])
-                        // // Dapatkan nama material dari wajah saat ini
-                        let materialName = triangles[i][triangles[i].length - 1];
-                        // Dapatkan material dari objek elephantMTL
-                        materials_used.push(triangles[i])
-                        let material = mtlModel[materialName];
-                        // Ubah ctx.fillStyle menjadi warna diffuse (Kd) dari material
-                        // Anda perlu mengubah array [R, G, B] menjadi string 'rgb(R, G, B)'
-                        ctx.fillStyle = `rgb(${material.Kd[0] * 255}, ${material.Kd[1] * 255}, ${material.Kd[2] * 255})`;
+                        // const triangle = triangles[i]
+                        // // console.log(triangles[i])
+                        // // // Dapatkan nama material dari wajah saat ini
+                        // let materialName = triangles[i][triangles[i].length - 1];
+                        // // Dapatkan material dari objek elephantMTL
+                        // materials_used.push(triangles[i])
+                        // let material = mtlModel[materialName];
+                        // // Ubah ctx.fillStyle menjadi warna diffuse (Kd) dari material
+                        // // Anda perlu mengubah array [R, G, B] menjadi string 'rgb(R, G, B)'
+                        // ctx.fillStyle = `rgb(${material.Kd[0] * 255}, ${material.Kd[1] * 255}, ${material.Kd[2] * 255})`;
 
                         // Set the color of the fill to the diffuse color of the material
                         // Start the drawing path
@@ -267,9 +266,10 @@
 
                         // Close the path
                         ctx.closePath();
+                        ctx.stroke();
 
                         // Fill the path
-                        ctx.fill();
+                        // ctx.fill();
                     }
                 }
                 console.log(materials_used)
