@@ -109,14 +109,17 @@
         </div>
         <button onclick="drawCanvas()">Gambar</button>
     </div>
-    <script src="./obj_files/elephant.js"></script>
-    <script src="./obj_files/elephant.mtl.js"></script>
+    <!-- <script src="./obj_files/godzilla.obj.js"></script>
+    <script src="./obj_files/godzilla.mtl.js"></script> -->
+    <script src="./obj_files/Lowpoly_tree_sample.mtl.js"></script>
+    <script src="./obj_files/Lowpoly_tree_sample.obj.js"></script>
+    <!-- <script src="./obj_files/Lowpoly_tree_sample.mtl.js"></script> -->
     <script src="./utils.js"></script>
     <script>
-        const size = 1;
-        const positionX = 1;
-        const positionY = 1;
-        const positionZ = 1;
+        const size = 0.1;
+        const positionX = 0;
+        const positionY = 0;
+        const positionZ = 0;
         function drawCanvas() {
             const canvas = document.getElementById('myCanvas');
             const ctx = canvas.getContext('2d');
@@ -134,10 +137,27 @@
             const clipNear = parseFloat(document.getElementById("clip-near").value);
             const clipFar = parseFloat(document.getElementById("clip-far").value);
             //const elephant = { vertices: [ ["0.205629", "0.939785", "0.875132"] ], faces: [ ["513/1/1", "516/2/1", "446/3/1"] ] }
-            const model = elephant;
+            const model = tree;
+            const mtlModel = treemtl
+            // const model = godzilla;
+            // const mtlModel = godzillaMTL
+            let rotationMatrix = [
+                [0, 0, 1],
+                [0, 1, 0],
+                [-1, 0, 0]
+            ];
+
             let vertices3d = model.vertices.map(v => {
-                return [v[0] * size + positionX, -v[1] * size + positionY, v[2] * size + positionZ]
-            })
+                // Scale and translate the vertex
+                let scaledTranslated = [v[0] * size + positionX, -v[1] * size + positionY, v[2] * size + positionZ];
+                // Rotate the vertex
+                let rotated = [
+                    scaledTranslated[0] * rotationMatrix[0][0] + scaledTranslated[1] * rotationMatrix[0][1] + scaledTranslated[2] * rotationMatrix[0][2],
+                    scaledTranslated[0] * rotationMatrix[1][0] + scaledTranslated[1] * rotationMatrix[1][1] + scaledTranslated[2] * rotationMatrix[1][2],
+                    scaledTranslated[0] * rotationMatrix[2][0] + scaledTranslated[1] * rotationMatrix[2][1] + scaledTranslated[2] * rotationMatrix[2][2]
+                ];
+                return rotated;
+            });
             let faces = model.faces
             // 1. Hitung vektor arah (dari kamera ke posisi look-at)
             let forward = [lookAtX - cameraX, lookAtY - cameraY, lookAtZ - cameraZ];
@@ -168,7 +188,6 @@
             let bukaanW_rad = bukaanW * Math.PI / 180;
             let bukaanH_rad = bukaanH * Math.PI / 180;
 
-            console.log(clipFar, clipNear)
             // 8. Buat matriks proyeksi
             let projectionMatrix = [
                 [1 / Math.tan(bukaanW_rad / 2), 0, 0, 0],
@@ -176,8 +195,6 @@
                 [0, 0, clipFar / (clipFar - clipNear), -clipNear * clipFar / (clipFar - clipNear)],
                 [0, 0, 1, 0]
             ];
-            console.log(projectionMatrix)
-
             // 9. Kalikan matriks tampilan dan proyeksi
             let vpMatrix = [];
             for (let i = 0; i < 4; i++) {
@@ -189,52 +206,29 @@
                     }
                 }
             }
-            // function renderToCanvas(vertices2d, triangles, ctx) {
-            //     // Clear the canvas
-            //     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-            //     // Set the color of the fill
-            //     ctx.fillStyle = "#000000";
-
-            //     // Iterate over the triangles
-            //     for (let i = 0; i < triangles.length; i++) {
-            //         // Start the drawing path
-            //         ctx.beginPath();
-
-            //         // Get the indices of the vertices of the triangle
-            //         let indices = triangles[i].map(face => face.split('/')[0] - 1);
-
-            //         // Move to the first vertex of the triangle
-            //         ctx.moveTo(vertices2d[indices[0]][0], vertices2d[indices[0]][1]);
-
-            //         // Draw lines to the other vertices
-            //         for (let j = 1; j < indices.length; j++) {
-            //             ctx.lineTo(vertices2d[indices[j]][0], vertices2d[indices[j]][1]);
-            //         }
-
-            //         // Close the path
-            //         ctx.closePath();
-
-            //         // Fill the path
-            //         ctx.fill();
-            //     }
-            // }
             function renderToCanvas(vertices2d, triangles, ctx, materials) {
+                const materials_used = []
                 // Clear the canvas
                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-                // // Set the color of the fill
-                // ctx.fillStyle = "#000000";
 
                 // Iterate over the triangles
                 for (let i = 0; i < triangles.length; i++) {
                     // Get the indices of the vertices of the triangle
-                    let indices = triangles[i].map(face => face.split('/')[0] - 1);
+                    let indices = triangles[i].map(face => {
+                        return face.split('/')[0] - 1
+                    }).filter(i => {
+                        return !isNaN(i)
+                    });
 
+                    // console.log(indices)
                     // Check if all vertices are within the clip range
                     let inClipRange = indices.every(index => {
-                        // Transform the 3D point to clip space
+
+                        // Transform the 3D point to clip space)
+                        // console.log(index)
+                        // console.log(vertices3d[index])
                         let point = [...vertices3d[index], 1];
+                        console.log(vpMatrix)
                         let clipPoint = [0, 0, 0, 0];
                         for (let i = 0; i < 4; i++) {
                             for (let j = 0; j < 4; j++) {
@@ -247,15 +241,17 @@
                     });
 
                     if (inClipRange) {
-                        let materialName = triangles[i][0].split('/')[2];
-                        let material = materials[materialName];
-
-                        // Set the color of the fill to the diffuse color of the material, if it exists
-                        if (material) {
-                            ctx.fillStyle = `rgb(${material.Kd[0] * 255}, ${material.Kd[1] * 255}, ${material.Kd[2] * 255})`;
-                        } else {
-                            ctx.fillStyle = "#000000"; // Default color if material does not exist
-                        }
+                        // console.log("indices = ",indices,"triangles = ",triangles)
+                        const triangle = triangles[i]
+                        // console.log(triangles[i])
+                        // // Dapatkan nama material dari wajah saat ini
+                        let materialName = triangles[i][triangles[i].length - 1];
+                        // Dapatkan material dari objek elephantMTL
+                        materials_used.push(triangles[i])
+                        let material = mtlModel[materialName];
+                        // Ubah ctx.fillStyle menjadi warna diffuse (Kd) dari material
+                        // Anda perlu mengubah array [R, G, B] menjadi string 'rgb(R, G, B)'
+                        ctx.fillStyle = `rgb(${material.Kd[0] * 255}, ${material.Kd[1] * 255}, ${material.Kd[2] * 255})`;
 
                         // Set the color of the fill to the diffuse color of the material
                         // Start the drawing path
@@ -276,44 +272,8 @@
                         ctx.fill();
                     }
                 }
+                console.log(materials_used)
             }
-
-            // function renderToCanvas(vertices2d, triangles, ctx) {
-            //     // Clear the canvas
-            //     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-            //     // Set the color of the fill
-            //     ctx.fillStyle = "#000000";
-
-            //     // Iterate over the triangles
-            //     for (let i = 0; i < triangles.length; i++) {
-            //         // Get the indices of the vertices of the triangle
-            //         let indices = triangles[i].map(face => face.split('/')[0] - 1);
-
-            //         // Check if all vertices are within the clip range
-            //         if (indices.every(index => vertices2d[index][2] >= clipNear && vertices2d[index][2] <= clipFar)) {
-            //             // Start the drawing path
-            //             ctx.beginPath();
-
-            //             // Move to the first vertex of the triangle
-            //             ctx.moveTo(vertices2d[indices[0]][0], vertices2d[indices[0]][1]);
-
-            //             // Draw lines to the other vertices
-            //             for (let j = 1; j < indices.length; j++) {
-            //                 ctx.lineTo(vertices2d[indices[j]][0], vertices2d[indices[j]][1]);
-            //             }
-
-            //             // Close the path
-            //             ctx.closePath();
-
-            //             // Fill the path
-            //             ctx.fill();
-            //         }
-            //     }
-            // }
-
-
-
 
 
             // Ubah titik-titik 3D menjadi titik-titik 2D
@@ -343,22 +303,24 @@
             });
 
             // Fungsi untuk menerapkan grading warna
-            function applyColorGrading(color, grading) {
-                return color.map(channel => Math.min(Math.max(channel * grading, 0), 1));
-            }
+            // function applyColorGrading(color, grading) {
+            //     return color.map(channel => Math.min(Math.max(channel * grading, 0), 1));
+            // }
 
-            // Nilai grading warna
-            let colorGrading = 1.2; // Ubah nilai ini sesuai kebutuhan
+            // // Nilai grading warna
+            // let colorGrading = 0.8; // Ubah nilai ini sesuai kebutuhan
 
-            // Terapkan grading warna ke setiap material dalam MTL
-            for (let materialName in elephantMTL) {
-                let material = elephantMTL[materialName];
-                material.Kd = applyColorGrading(material.Kd, colorGrading);
-            }
+            // // Terapkan grading warna ke setiap material dalam MTL
+            // for (let materialName in elephantMTL) {
+            //     let material = elephantMTL[materialName];
+            //     // console.log("prevmaterial", material)
+            //     material.Kd = applyColorGrading(material.Kd, colorGrading);
+            //     // console.log("aftermaterial", material)
+            // }
 
 
             // Render ke canvas
-            renderToCanvas(vertices2d, faces, ctx, elephantMTL);
+            renderToCanvas(vertices2d, faces, ctx, mtlModel);
 
             console.log("object should be drawn");
         }
