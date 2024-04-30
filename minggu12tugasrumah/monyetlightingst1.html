@@ -1,0 +1,150 @@
+monye
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Monyet Lighting</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        #canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas" width="1280" height="720"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
+    <script>
+        fetch("./kera.obj").then(async response => {
+
+            const objText = await response.text();
+            const lines = objText.split('\n');
+
+            const vertices = [];
+            const faces = [];
+
+            for (const line of lines) {
+                const tokens = line.trim().split(/\s+/);
+                if (!tokens.length) continue;
+
+                if (tokens[0] === 'v') {
+                    // Vertex coordinates (x, y, z)
+                    const [x, y, z] = tokens.slice(1).map(parseFloat);
+                    vertices.push({ x, y, z });
+                } else if (tokens[0] === 'f') {
+                    // Face indices (assuming triangular faces)
+                    const [v1, v2, v3] = tokens.slice(1).map((token) => parseInt(token.split('/')[0], 10));
+                    faces.push({ v1, v2, v3 });
+                }
+            }
+            //this is the model
+            const model = {
+                vertices: vertices, // {x,y,z}
+                faces: faces, // {v1,v2,v3}
+            }
+
+
+            const canvas = document.querySelector("#canvas");
+            const gl = canvas.getContext("webgl2");
+
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Set clear color to black, fully opaque
+            gl.clear(gl.COLOR_BUFFER_BIT);  // Clear the color buffer with specified clear color
+
+            const vertexShader = gl.createShader(gl.VERTEX_SHADER); // Create vertex shader
+            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER); // Create fragment shader
+            // Vertex Shader
+            let vertexShaderSource = `#version 300 es
+in vec4 a_position;
+
+void main() {
+    gl_Position = a_position;
+}`;
+
+            // Fragment Shader
+            let fragmentShaderSource = `#version 300 es
+precision mediump float;
+
+out vec4 outColor;
+
+void main() {
+    outColor = vec4(1, 0, 0.5, 1);  // pink color
+}`;
+
+            // Create and setup a vertex array object
+            const vao = gl.createVertexArray();
+            gl.bindVertexArray(vao);
+
+
+            gl.shaderSource(vertexShader, vertexShaderSource)
+            gl.shaderSource(fragmentShader, fragmentShaderSource)
+
+            gl.compileShader(vertexShader);
+            gl.compileShader(fragmentShader);
+
+            if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+                console.error(gl.getShaderInfoLog(vertexShader));
+            }
+            if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+                console.error(gl.getShaderInfoLog(fragmentShader));
+            }
+
+            let shaderProgram = gl.createProgram();
+            gl.attachShader(shaderProgram, vertexShader);
+            gl.attachShader(shaderProgram, fragmentShader);
+            gl.linkProgram(shaderProgram);
+
+            gl.useProgram(shaderProgram);
+            // Create a buffer for the positions.
+            const positionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+            // Set positions of vertices
+            const positions = vertices.map(({ x, y, z }) => [x, y, z]).flat()
+
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+            // Create an element buffer for the face indices
+            const elementBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer);
+
+            // Set face indices
+            const indices = faces.map(({ v1, v2, v3 }) => [v1 - 1, v2 - 1, v3 - 1]).flat(); // obj indices start at 1
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+
+            // Turn on the attribute
+            let positionAttributeLocation = gl.getAttribLocation(shaderProgram, "a_position");
+            gl.enableVertexAttribArray(positionAttributeLocation);
+
+            // Tell the attribute how to get data out of positionBuffer
+            let size = 3;          // 3 components per iteration
+            let type = gl.FLOAT;   // the data is 32bit floats
+            let normalize = false; // don't normalize the data
+            let stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+            let offset = 0;        // start at the beginning of the buffer
+            gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+
+            // draw
+            let primitiveType = gl.TRIANGLES;
+            let count = indices.length;
+            gl.drawElements(primitiveType, count, gl.UNSIGNED_SHORT, offset);
+
+        })
+    </script>
+</body>
+
+</html>
+
+<!-- // fetch('./kera.obj')
+//     .then(response => response.text())
+//     .then(objData => {
+
+            // offset = 0;
+            // let count = 3;
+            // gl.drawArrays(primitiveType, offset, count);
+//     }); -->
