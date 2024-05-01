@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Draw Cube No Shading</title>
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+            "three/examples/jsm/loaders/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/loaders/"
+          }
+        }
+      </script>
+</head>
+
+<body>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+        async function main() {
+
+            var scene = new THREE.Scene();
+            var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            var renderer = new THREE.WebGLRenderer({ antialias: true });
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            const objLoader = new OBJLoader();
+
+            // Ganti 'path/to/your/file.obj' dengan jalur file objek lokal Anda
+            await objLoader.loadAsync('./kera.obj', object => {
+                scene.add(object);
+                animate();
+            })
+
+            // .then(object => {
+            //         scene.add(object);
+            //         animate();
+            //     })
+            //     .catch(error => console.error(error));
+
+            camera.position.z = 5;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                renderer.render(scene, camera);
+            }
+        }
+        main()
+    </script>
+
+</body>
+
+</html>
