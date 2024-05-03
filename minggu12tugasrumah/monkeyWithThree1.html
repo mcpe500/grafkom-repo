@@ -2,9 +2,9 @@
 <html>
 
 <head>
-<meta charset="UTF-8" />
-<title>Draw Cube No Shading</title>
-<script type="importmap">
+    <meta charset="UTF-8" />
+    <title>Draw Cube No Shading</title>
+    <script type="importmap">
 {
 "imports": {
 "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
@@ -16,64 +16,64 @@
 </head>
 
 <body>
-<script type="module">
-import * as THREE from "three";
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+    <script type="module">
+        import * as THREE from "three";
+        import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
+        import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-async function main() {
-var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera(
-75,
-window.innerWidth / window.innerHeight,
-0.1,
-1000
-);
-var renderer = new THREE.WebGLRenderer();
-// var renderer = new THREE.WebGLRenderer({ antialias: true });
+        async function main() {
+            var scene = new THREE.Scene();
+            var camera = new THREE.PerspectiveCamera(
+                75,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            var renderer = new THREE.WebGLRenderer();
+            // var renderer = new THREE.WebGLRenderer({ antialias: true });
 
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
 
-var geometry = new THREE.BoxGeometry(1, 1, 1);
-var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-camera.position.z = 2;
+            var geometry = new THREE.BoxGeometry(1, 1, 1);
+            var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            camera.position.z = 2;
 
-var controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.campingFactor = 0.25;
-controls.enableZoom = true;
+            var controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.campingFactor = 0.25;
+            controls.enableZoom = true;
 
-var keyLight = new THREE.DirectionalLight(new THREE.Color('hsl(30, 100%, 75%)'), 1.0);
-keyLight.position.set(-100, 0, 100);
+            var keyLight = new THREE.DirectionalLight(new THREE.Color('hsl(30, 100%, 75%)'), 1.0);
+            keyLight.position.set(-100, 0, 100);
 
-var fillLight = new THREE.DirectionalLight(new THREE.Color('hsl(240, 100%, 75%)'), 0.75);
-fillLight.position.set(100, 0, 100);
+            var fillLight = new THREE.DirectionalLight(new THREE.Color('hsl(240, 100%, 75%)'), 0.75);
+            fillLight.position.set(100, 0, 100);
 
-var backLight = new THREE.DirectionalLight(0xffffff, 1.0);
-backLight.position.set(100, 0, -100).normalize();
+            var backLight = new THREE.DirectionalLight(0xffffff, 1.0);
+            backLight.position.set(100, 0, -100).normalize();
 
-scene.add(keyLight);
-scene.add(fillLight);
-scene.add(backLight);
+            scene.add(keyLight);
+            scene.add(fillLight);
+            scene.add(backLight);
 
-var objLoader = new OBJLoader();
-objLoader.setPath('./');
-objLoader.load('kera.obj', function (object) {
- 
-scene.add(object);
-});
+            var objLoader = new OBJLoader();
+            objLoader.setPath('./');
+            objLoader.load('kera.obj', function (object) {
+
+                scene.add(object);
+            });
 
 
-function animate() {
-requestAnimationFrame(animate);
-controls.update();
-renderer.render(scene, camera);
-}
-animate();
-}
-main();
-</script>
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+        main();
+    </script>
 </body>
 
 </html>

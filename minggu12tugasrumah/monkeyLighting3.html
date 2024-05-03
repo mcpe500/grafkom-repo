@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Monyet Lighting</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        #canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas" width="1280" height="720"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
+
+    <script>
+        fetch("./kera.obj")
+            .then(response => response.text())
+            .then(objText => {
+                const canvas = document.querySelector("#canvas");
+                const gl = canvas.getContext("webgl2");
+
+                // Vertex shader code
+                const vsSource = `#version 300 es
+                    in vec4 position;
+                    in vec3 normal;
+                    uniform mat4 modelViewMatrix;
+                    uniform mat4 projectionMatrix;
+                    out vec3 vNormal;
+                    void main() {
+                        gl_Position = projectionMatrix * modelViewMatrix * position;
+                        vNormal = mat3(modelViewMatrix) * normal;
+                    }
+                `;
+
+                // Fragment shader code
+                const fsSource = `#version 300 es
+                    precision highp float;
+                    in vec3 vNormal;
+                    out vec4 fragColor;
+                    uniform vec3 lightDirection;
+                    uniform vec3 lightColor;
+                    uniform vec3 objectColor;
+                    void main() {
+                        vec3 normal = normalize(vNormal);
+                        float intensity = dot(normal, normalize(lightDirection));
+                        vec3 resultColor = objectColor * lightColor * intensity;
+                        fragColor = vec4(resultColor, 1.0);
+                    }
+                `;
+
+                // Compile shaders
+                const vs = gl.createShader(gl.VERTEX_SHADER);
+                gl.shaderSource(vs, vsSource);
+                gl.compileShader(vs);
+
+                const fs = gl.createShader(gl.FRAGMENT_SHADER);
+                gl.shaderSource(fs, fsSource);
+                gl.compileShader(fs);
+
+                // Create shader program
+                const shaderProgram = gl.createProgram();
+                gl.attachShader(shaderProgram, vs);
+                gl.attachShader(shaderProgram, fs);
+                gl.linkProgram(shaderProgram);
+                gl.useProgram(shaderProgram);
+
+                // Set up vertex data and buffers
+                const { positions, normals, indices } = parseOBJ(objText);
+
+                const positionBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+                const normalBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+
+                const indexBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+
+                // Define attribute locations
+                const positionAttribLocation = gl.getAttribLocation(shaderProgram, 'position');
+                const normalAttribLocation = gl.getAttribLocation(shaderProgram, 'normal');
+
+                // Enable vertex attributes
+                gl.enableVertexAttribArray(positionAttribLocation);
+                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+                gl.vertexAttribPointer(positionAttribLocation, 3, gl.FLOAT, false, 0, 0);
+
+                gl.enableVertexAttribArray(normalAttribLocation);
+                gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+                gl.vertexAttribPointer(normalAttribLocation, 3, gl.FLOAT, false, 0, 0);
+
+                // Define uniforms
+                const modelViewMatrixLocation = gl.getUniformLocation(shaderProgram, 'modelViewMatrix');
+                const projectionMatrixLocation = gl.getUniformLocation(shaderProgram, 'projectionMatrix');
+                const lightDirectionLocation = gl.getUniformLocation(shaderProgram, 'lightDirection');
+                const lightColorLocation = gl.getUniformLocation(shaderProgram, 'lightColor');
+                const objectColorLocation = gl.getUniformLocation(shaderProgram, 'objectColor');
+
+                // Set up camera and lighting
+                const modelViewMatrix = mat4.create();
+                const projectionMatrix = mat4.create();
+                mat4.perspective(projectionMatrix, 75 * Math.PI / 180, canvas.width / canvas.height, 0.1, 1000);
+
+                const lightDirection = vec3.fromValues(-1, 0, 1);
+                vec3.normalize(lightDirection, lightDirection);
+                const lightColor = vec3.fromValues(1, 1, 1);
+                const objectColor = vec3.fromValues(0, 1, 0);
+
+                // Main render loop
+                function render() {
+                    gl.clearColor(0, 0, 0, 1);
+                    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+                    gl.enable(gl.DEPTH_TEST);
+
+                    mat4.identity(modelViewMatrix);
+                    mat4.translate(modelViewMatrix, modelViewMatrix, [0, 0, -2]);
+
+                    gl.uniformMatrix4fv(modelViewMatrixLocation, false, modelViewMatrix);
+                    gl.uniformMatrix4fv(projectionMatrixLocation, false, projectionMatrix);
+                    gl.uniform3fv(lightDirectionLocation, lightDirection);
+                    gl.uniform3fv(lightColorLocation, lightColor);
+                    gl.uniform3fv(objectColorLocation, objectColor);
+
+                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+                    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+
+                    requestAnimationFrame(render);
+                }
+
+                render();
+            });
+
+        function parseOBJ(objText) {
+            const positions = [];
+            const normals = [];
+            const indices = [];
+
+            const lines = objText.split('\n');
+            for (const line of lines) {
+                const parts = line.trim().split(/\s+/);
+                if (parts[0] === 'v') {
+                    positions.push(parseFloat(parts[1]), parseFloat(parts[2]), parseFloat(parts[3]));
+                } else if (parts[0] === 'vn') {
+                    normals.push(parseFloat(parts[1]), parseFloat(parts[2]), parseFloat(parts[3]));
+                } else if (parts[0] === 'f') {
+                    for (let i = 1; i < parts.length; i++) {
+                        const indicesData = parts[i].split('/');
+                        indices.push(parseInt(indicesData[0]) - 1); // OBJ indices start from 1
+                    }
+                }
+            }
+
+            return { positions, normals, indices };
+        }
+    </script>
+</body>
+
+</html>

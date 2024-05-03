@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Draw Cube With Textures</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        #canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas" width="1280" height="720"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
+    <script>
+        function loadTexture(gl, shaderProgram, imageURL, textureUnit) {
+            return new Promise((resolve, reject) => {
+                var texture = gl.createTexture();
+                gl.activeTexture(gl.TEXTURE0 + textureUnit);
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+                var image = new Image();
+                image.onload = function () {
+                    gl.bindTexture(gl.TEXTURE_2D, texture);
+                    gl.texImage2D(
+                        gl.TEXTURE_2D,
+                        0,
+                        gl.RGBA,
+                        gl.RGBA,
+                        gl.UNSIGNED_BYTE,
+                        image
+                    );
+                    resolve();
+                };
+                image.onerror = function () {
+                    reject(new Error("Failed to load texture: " + imageURL));
+                };
+                image.src = imageURL;
+
+                gl.uniform1i(
+                    gl.getUniformLocation(shaderProgram, "uSampler" + textureUnit),
+                    textureUnit
+                );
+            });
+        }
+
+        var canvas = document.getElementById("canvas");
+        var gl = canvas.getContext("webgl2");
+
+        if (!gl) {
+            alert("WebGL 2 not available");
+        }
+
+        var vertices = [
+            // Front
+            -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0,
+            // Back
+            -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0,
+            // Top
+            -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0,
+            // Bottom
+            -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0,
+            // Right
+            1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0,
+            // Left
+            -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0,
+        ];
+
+        var cubeVerticesIndex = [
+            0, 1, 2, 0, 2, 3, // Front
+            4, 5, 6, 4, 6, 7, // Back
+            8, 9, 10, 8, 10, 11, // Top
+            12, 13, 14, 12, 14, 15, // Bottom
+            16, 17, 18, 16, 18, 19, // Right
+            20, 21, 22, 20, 22, 23, // Left
+        ];
+
+        var vertexBufferObject = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBufferObject);
+        gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(vertices),
+            gl.STATIC_DRAW
+        );
+
+        var elementBufferObject = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBufferObject);
+        gl.bufferData(
+            gl.ELEMENT_ARRAY_BUFFER,
+            new Uint16Array(cubeVerticesIndex),
+            gl.STATIC_DRAW
+        );
+
+        var vertexShaderSource = `#version 300 es
+        in vec3 position;
+        in vec2 textureCoord;
+        uniform mat4 modelViewMatrix;
+        uniform mat4 projectionMatrix;
+        out vec2 fragTextureCoord;
+        void main() {
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            fragTextureCoord = textureCoord;
+        }
+    `;
+
+        var fragmentShaderSource = `#version 300 es
+        precision mediump float;
+        in vec2 fragTextureCoord;
+        uniform sampler2D uSampler0;
+        uniform sampler2D uSampler1;
+        uniform sampler2D uSampler2;
+        uniform sampler2D uSampler3;
+        uniform sampler2D uSampler4;
+        uniform sampler2D uSampler5;
+        out vec4 fragColor;
+        void main() {
+            vec4 color;
+            if (fragTextureCoord.y < 0.25) {
+                color = texture(uSampler0, fragTextureCoord);
+            } else if (fragTextureCoord.y < 0.5) {
+                color = texture(uSampler1, fragTextureCoord);
+            } else if (fragTextureCoord.y < 0.75) {
+                color = texture(uSampler2, fragTextureCoord);
+            } else if (fragTextureCoord.y < 1.0) {
+                color = texture(uSampler3, fragTextureCoord);
+            } else if (fragTextureCoord.y < 1.25) {
+                color = texture(uSampler4, fragTextureCoord);
+            } else {
+                color = texture(uSampler5, fragTextureCoord);
+            }
+            fragColor = color;
+        }
+    `;
+
+        var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vertexShader, vertexShaderSource);
+        gl.compileShader(vertexShader);
+
+        var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fragmentShader, fragmentShaderSource);
+        gl.compileShader(fragmentShader);
+
+        var shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+        gl.useProgram(shaderProgram);
+
+        var positionLocation = gl.getAttribLocation(shaderProgram, "position");
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+
+        var textureCoordBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+        var textureCoord = [
+            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, // Front
+            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, // Back
+            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, // Top
+            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, // Bottom
+            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, // Right
+            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, // Left
+        ];
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoord), gl.STATIC_DRAW);
+
+        var textureCoordLocation = gl.getAttribLocation(shaderProgram, "textureCoord");
+        gl.enableVertexAttribArray(textureCoordLocation);
+        gl.vertexAttribPointer(textureCoordLocation, 2, gl.FLOAT, false, 0, 0);
+
+        var modelViewMatrix = mat4.create();
+        var projectionMatrix = mat4.create();
+        mat4.perspective(
+            projectionMatrix,
+            Math.PI / 4,
+            canvas.width / canvas.height,
+            0.1,
+            100.0
+        );
+        var modelViewMatrixLocation = gl.getUniformLocation(
+            shaderProgram,
+            "modelViewMatrix"
+        );
+        var projectionMatrixLocation = gl.getUniformLocation(
+            shaderProgram,
+            "projectionMatrix"
+        );
+
+        mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, -5.0]);
+        mat4.rotateX(modelViewMatrix, modelViewMatrix, -0.7);
+        mat4.rotateY(modelViewMatrix, modelViewMatrix, 0.7);
+
+        function draw() {
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.enable(gl.DEPTH_TEST);
+            gl.uniformMatrix4fv(modelViewMatrixLocation, false, modelViewMatrix);
+            gl.uniformMatrix4fv(projectionMatrixLocation, false, projectionMatrix);
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBufferObject);
+            gl.drawElements(
+                gl.TRIANGLES,
+                cubeVerticesIndex.length,
+                gl.UNSIGNED_SHORT,
+                0
+            );
+            requestAnimationFrame(draw);
+        }
+
+        const textures_URLS = [
+            "./image/resize/resize_cobblestone.jpg",
+            "./image/resize/resize_diamond.jpg",
+            "./image/resize/resize_dirt.jpg",
+            "./image/resize/resize_emerald.jpg",
+            "./image/resize/resize_iron.jpg",
+            "./image/resize/resize_wood.jpg",
+        ];
+
+        Promise.all(
+            textures_URLS.map((textureURL, index) =>
+                loadTexture(gl, shaderProgram, textureURL, index)
+            )
+        ).then(draw);
+    </script>
+
+</body>
+
+</html>

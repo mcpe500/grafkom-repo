@@ -20,36 +20,36 @@
     <canvas id="canvas" width="1280" height="720"></canvas>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
     <script id="vertex-shader" type="x-shader/x-vertex">#version 300 es
-in vec3 a_position;
-in vec3 a_normal;
+        in vec3 a_position;
+        in vec3 a_normal;
 
-uniform mat4 u_worldViewProjection;
-uniform mat4 u_worldInverseTranspose;
+        uniform mat4 u_worldViewProjection;
+        uniform mat4 u_worldInverseTranspose;
 
-out vec3 v_normal;
+        out vec3 v_normal;
 
-void main() {
-gl_Position = u_worldViewProjection * vec4(a_position, 1.0);
-v_normal = mat3(u_worldInverseTranspose) * a_normal;
-}
-</script>
+        void main() {
+            gl_Position = u_worldViewProjection * vec4(a_position, 1.0);
+            v_normal = mat3(u_worldInverseTranspose) * a_normal;
+        }
+    </script>
     <script id="fragment-shader" type="x-shader/x-fragment">#version 300 es
-precision highp float;
+        precision highp float;
 
-in vec3 v_normal;
+        in vec3 v_normal;
 
-uniform vec3 u_lightColor;
-uniform vec3 u_ambientLight;
+        uniform vec3 u_lightColor;
+        uniform vec3 u_ambientLight;
 
-out vec4 outColor;
+        out vec4 outColor;
 
-void main() {
-vec3 normal = normalize(v_normal);
-float light = dot(normal, normalize(vec3(1, 1, 1)));
+        void main() {
+            vec3 normal = normalize(v_normal);
+            float light = dot(normal, normalize(vec3(1, 1, 1)));
 
-outColor = vec4((u_ambientLight + u_lightColor * light), 1);
-}
-</script>
+            outColor = vec4((u_ambientLight + u_lightColor * light), 1);
+        }
+    </script>
     <script>
         fetch("./kera.obj").then(async response => {
             const canvas = document.querySelector("#canvas");
@@ -90,7 +90,6 @@ outColor = vec4((u_ambientLight + u_lightColor * light), 1);
             gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(objData.indices), gl.STATIC_DRAW);
 
             const vertexCount = objData.indices.length;
-            // console.log(vertexCount)
 
             const fieldOfView = 45 * Math.PI / 180;
             const aspect = canvas.clientWidth / canvas.clientHeight;
@@ -153,6 +152,7 @@ outColor = vec4((u_ambientLight + u_lightColor * light), 1);
                 }
                 return program;
             }
+
             async function loadObj(response) {
                 const objData = await response.text();
                 const lines = objData.split('\n');
@@ -168,39 +168,20 @@ outColor = vec4((u_ambientLight + u_lightColor * light), 1);
                         const normal = line.split(' ').slice(1).map(parseFloat);
                         normals.push(...normal);
                     } else if (line.startsWith('f ')) {
-                        const faceIndices = line.split(' ').slice(1).map(f => parseInt(f.split('/')[0]) - 1);
-                        indices.push(...faceIndices);
+                        const face = line.split(' ').slice(1);
+                        face.forEach(f => {
+                            // const index = f.split('/')[0] - 1;
+                            indices.push(f.split('/')[0] - 1);
+                            // indices.push(f.split('/')[1] - 1);
+                            // indices.push(f.split('/')[2] - 1);
+                        });
                     }
                 }
                 console.log({ positions, normals, indices })
                 return { positions, normals, indices };
             }
-
         })
     </script>
 </body>
 
 </html>
-
-
-
-// async function loadObj(response) {
-// const objData = await response.text();
-// const lines = objData.split('\n');
-// const positions = [];
-// const normals = [];
-// const indices = [];
-// for (let i = 0; i < lines.length; i++) { // const line=lines[i].trim(); // if (line.startsWith('v ')) {
-// const vertex = line.split(' ').slice(1).map(parseFloat);
-// positions.push(...vertex);
-// } else if (line.startsWith(' vn ')) {
-// const normal = line.split(' ').slice(1).map(parseFloat);
-// normals.push(...normal);
-// normals.push(...normal);
-// normals.push(...normal);
-// } else if (line.startsWith(' f ')) {
-// const face = line.split(' ').slice(1);
-// face.forEach(f => {
-// // const index = f.split(' /')[0] - 1; // indices.push(f.split('/')[0] - 1); // indices.push(f.split('/')[1] - 1);
-    // indices.push(f.split('/')[2] - 1); // }); // } // } // console.log({ positions, normals, indices }) // return {
-    positions, normals, indices }; // }

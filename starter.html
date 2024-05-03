@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Monyet Lighting</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        #canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas" width="1280" height="720"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
+
+    <script>
+        fetch("./kera.obj").then(async response => {
+            const canvas = document.querySelector("#canvas");
+            const gl = canvas.getContext("webgl2");
+
+        })
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Draw Cube with Textures</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+          "three/examples/jsm/loaders/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/loaders/",
+          "three/examples/jsm/controls/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/controls/"
+        }
+      }
+    </script>
+</head>
+
+<body>
+    <script type="module">
+        import * as THREE from "three";
+        import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
+        import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+
+        async function main() {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(
+                75,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            const renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            const textures_URLS = [
+                "./image/resize/resize_cobblestone.jpg",
+                "./image/resize/resize_diamond.jpg",
+                "./image/resize/resize_dirt.jpg",
+                "./image/resize/resize_emerald.jpg",
+                "./image/resize/resize_iron.jpg",
+                "./image/resize/resize_wood.jpg",
+            ];
+
+            const textureLoader = new THREE.TextureLoader();
+            const textures = textures_URLS.map(url => textureLoader.load(url));
+
+            const materials = textures.map(texture => new THREE.MeshBasicMaterial({ map: texture }));
+            const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const cube = new THREE.Mesh(cubeGeometry, materials);
+            scene.add(cube);
+
+            camera.position.z = 5;
+
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.25;
+            controls.enableZoom = true;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+        main();
+    </script>
+</body>
+
+</html>

@@ -1,176 +1,119 @@
+
+<canvas id="canvas" width="1280" height="720"></canvas>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
 <script>
-const size = 1;
-const positionX = 1;
-const positionY = 1;
-const positionZ = 1;
-function drawCanvas() {
-const canvas = document.getElementById('myCanvas');
-const ctx = canvas.getContext('2d');
-const cameraX = parseFloat(document.getElementById("camera-x").value);
-const cameraY = parseFloat(document.getElementById("camera-y").value);
-const cameraZ = parseFloat(document.getElementById("camera-z").value);
-const lookAtX = parseFloat(document.getElementById("lookat-x").value);
-const lookAtY = parseFloat(document.getElementById("lookat-y").value);
-const lookAtZ = parseFloat(document.getElementById("lookat-z").value);
-const upX = parseFloat(document.getElementById("up-x").value);
-const upY = parseFloat(document.getElementById("up-y").value);
-const upZ = parseFloat(document.getElementById("up-z").value);
-const bukaanW = parseFloat(document.getElementById("bukaan-w").value); // ini dalam derajat
-const bukaanH = parseFloat(document.getElementById("bukaan-h").value); // ini dalam derajat
-const clipNear = parseFloat(document.getElementById("clip-near").value);
-const clipFar = parseFloat(document.getElementById("clip-far").value);
-//const elephant = { vertices: [ ["0.205629", "0.939785", "0.875132"] ], faces: [ ["513/1/1", "516/2/1", "446/3/1"] ] }
-const model = elephant;
-let vertices3d = model.vertices.map(v => {
-return [v[0] * size + positionX, -v[1] * size + positionY, v[2] * size + positionZ]
+fetch("./kera.obj").then(async response => {
+
+const objText = await response.text();
+const lines = objText.split('\n');
+
+const vertices = [];
+const faces = [];
+
+for (const line of lines) {
+const tokens = line.trim().split(/\s+/);
+if (!tokens.length) continue;
+
+if (tokens[0] === 'v') {
+// Vertex coordinates (x, y, z)
+const [x, y, z] = tokens.slice(1).map(parseFloat);
+vertices.push({ x, y, z });
+} else if (tokens[0] === 'f') {
+// Face indices (assuming triangular faces)
+const [v1, v2, v3] = tokens.slice(1).map((token) => parseInt(token.split('/')[0], 10));
+faces.push({ v1, v2, v3 });
+}
+}
+//this is the model
+const model = {
+vertices: vertices, // {x,y,z}
+faces: faces, // {v1,v2,v3}
+}
+
+
+const canvas = document.querySelector("#canvas");
+const gl = canvas.getContext("webgl2");
+
+gl.clearColor(0.0, 0.0, 0.0, 1.0);// Set clear color to black, fully opaque
+gl.clear(gl.COLOR_BUFFER_BIT);// Clear the color buffer with specified clear color
+
+const vertexShader = gl.createShader(gl.VERTEX_SHADER); // Create vertex shader
+const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER); // Create fragment shader
+// Vertex Shader
+let vertexShaderSource = `#version 300 es
+in vec4 a_position;
+
+void main() {
+gl_Position = a_position;
+}`;
+
+// Fragment Shader
+let fragmentShaderSource = `#version 300 es
+precision mediump float;
+
+out vec4 outColor;
+
+void main() {
+outColor = vec4(1, 0, 0.5, 1);// pink color
+}`;
+
+gl.shaderSource(vertexShader, vertexShaderSource)
+gl.shaderSource(fragmentShader, fragmentShaderSource)
+
+gl.compileShader(vertexShader);
+gl.compileShader(fragmentShader);
+
+if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+console.error(gl.getShaderInfoLog(vertexShader));
+}
+if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+console.error(gl.getShaderInfoLog(fragmentShader));
+}
+
+let shaderProgram = gl.createProgram();
+gl.attachShader(shaderProgram, vertexShader);
+gl.attachShader(shaderProgram, fragmentShader);
+gl.linkProgram(shaderProgram);
+
+gl.useProgram(shaderProgram);
+// Create a buffer for the positions.
+const positionBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+// Set positions of vertices
+const positions = vertices.map(({ x, y, z }) => [x, y, z]).flat()
+
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+// Create an element buffer for the face indices
+const elementBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer);
+
+// Set face indices
+const indices = faces.map(({ v1, v2, v3 }) => [v1 - 1, v2 - 1, v3 - 1]).flat(); // obj indices start at 1
+gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+
+
+// Create and setup a vertex array object
+const vao = gl.createVertexArray();
+gl.bindVertexArray(vao);
+
+// Turn on the attribute
+let positionAttributeLocation = gl.getAttribLocation(shaderProgram, "a_position");
+gl.enableVertexAttribArray(positionAttributeLocation);
+
+// Tell the attribute how to get data out of positionBuffer
+let size = 3;// 3 components per iteration
+let type = gl.FLOAT; // the data is 32bit floats
+let normalize = false; // don't normalize the data
+let stride = 0;// 0 = move forward size * sizeof(type) each iteration to get the next position
+let offset = 0;// start at the beginning of the buffer
+gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+
+// draw
+let primitiveType = gl.TRIANGLES;
+let count = indices.length;
+gl.drawElements(primitiveType, count, gl.UNSIGNED_SHORT, offset);
+
 })
-let faces = model.faces
-// 1. Hitung vektor arah (dari kamera ke posisi look-at)
-let forward = [lookAtX - cameraX, lookAtY - cameraY, lookAtZ - cameraZ];
-
-// 2. Normalisasi vektor forward
-let norm = Math.sqrt(forward[0] * forward[0] + forward[1] * forward[1] + forward[2] * forward[2]);
-forward = [forward[0] / norm, forward[1] / norm, forward[2] / norm];
-
-// 3. Hitung vektor kanan (yang tegak lurus dengan forward dan up)
-let right = [upY * forward[2] - upZ * forward[1], upZ * forward[0] - upX * forward[2], upX * forward[1] - upY * forward[0]];
-
-// 4. Normalisasi vektor right
-norm = Math.sqrt(right[0] * right[0] + right[1] * right[1] + right[2] * right[2]);
-right = [right[0] / norm, right[1] / norm, right[2] / norm];
-
-// 5. Hitung vektor up yang baru (yang tegak lurus dengan right dan forward)
-let up = [right[1] * forward[2] - right[2] * forward[1], right[2] * forward[0] - right[0] * forward[2], right[0] * forward[1] - right[1] * forward[0]];
-
-// 6. Buat matriks tampilan
-let viewMatrix = [
-[right[0], up[0], -forward[0], -cameraX],
-[right[1], up[1], -forward[1], -cameraY],
-[right[2], up[2], -forward[2], -cameraZ],
-[0, 0, 0, 1]
-];
-
-// 7. Konversi sudut bidang pandang dari derajat ke radian
-let bukaanW_rad = bukaanW * Math.PI / 180;
-let bukaanH_rad = bukaanH * Math.PI / 180;
-
-// 8. Buat matriks proyeksi
-let projectionMatrix = [
-[1 / Math.tan(bukaanW_rad / 2), 0, 0, 0],
-[0, 1 / Math.tan(bukaanH_rad / 2), 0, 0],
-[0, 0, clipFar / (clipFar - clipNear), -clipNear * clipFar / (clipFar - clipNear)],
-[0, 0, 1, 0]
-];
-// 9. Kalikan matriks tampilan dan proyeksi
-let vpMatrix = [];
-for (let i = 0; i < 4; i++) {
-vpMatrix[i] = [];
-for (let j = 0; j < 4; j++) {
-vpMatrix[i][j] = 0;
-for (let k = 0; k < 4; k++) {
-vpMatrix[i][j] += projectionMatrix[i][k] * viewMatrix[k][j];
-}
-}
-}
-function renderToCanvas(vertices2d, triangles, ctx, materials) {
-// Clear the canvas
-ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-// Iterate over the triangles
-for (let i = 0; i < triangles.length; i++) {
-// Get the indices of the vertices of the triangle
-let indices = triangles[i].map(face => face.split('/')[0] - 1);
-
-// Check if all vertices are within the clip range
-let inClipRange = indices.every(index => {
-// Transform the 3D point to clip space
-let point = [...vertices3d[index], 1];
-let clipPoint = [0, 0, 0, 0];
-for (let i = 0; i < 4; i++) {
-for (let j = 0; j < 4; j++) {
-clipPoint[i] += vpMatrix[i][j] * point[j];
-}
-}
-
-// Check if the z-coordinate is within the clip range
-return clipPoint[2] / clipPoint[3] >= clipNear && clipPoint[2] / clipPoint[3] <= clipFar;
-});
-
-if (inClipRange) {
-// console.log("indices = ",indices,"triangles = ",triangles)
-const triangle = triangles[i]
-console.log(triangle)
-ctx.fillStyle = "#000000";
-
-// Set the color of the fill to the diffuse color of the material
-// Start the drawing path
-ctx.beginPath();
-
-// Move to the first vertex of the triangle
-ctx.moveTo(vertices2d[indices[0]][0], vertices2d[indices[0]][1]);
-
-// Draw lines to the other vertices
-for (let j = 1; j < indices.length; j++) {
-ctx.lineTo(vertices2d[indices[j]][0], vertices2d[indices[j]][1]);
-}
-
-// Close the path
-ctx.closePath();
-
-// Fill the path
-ctx.fill();
-}
-}
-}
-
-
-// Ubah titik-titik 3D menjadi titik-titik 2D
-let vertices2d = vertices3d.map(vertex => {
-// Tambahkan komponen w=1 ke setiap titik
-let vertex4d = [...vertex, 1];
-
-// Kalikan titik dengan matriks vpMatrix
-let result = [0, 0, 0, 0];
-for (let i = 0; i < 4; i++) {
-for (let j = 0; j < 4; j++) {
-result[i] += vpMatrix[i][j] * vertex4d[j];
-}
-}
-
-// Bagi oleh komponen w untuk mendapatkan koordinat homogen, jika w bukan 0 atau 1
-if (result[3] != 0 && result[3] != 1) {
-result = result.map(x => x / result[3]);
-}
-
-// Transformasi viewport: ubah koordinat klip ke koordinat layar
-result[0] = result[0] * canvas.width / 2 + canvas.width / 2;
-result[1] = result[1] * canvas.height / 2 + canvas.height / 2; // Y-axis is flipped in canvas
-
-// Kembalikan hanya komponen x dan y
-return result.slice(0, 2);
-});
-
-// Fungsi untuk menerapkan grading warna
-function applyColorGrading(color, grading) {
-return color.map(channel => Math.min(Math.max(channel * grading, 0), 1));
-}
-
-// Nilai grading warna
-let colorGrading = 0.8; // Ubah nilai ini sesuai kebutuhan
-
-// Terapkan grading warna ke setiap material dalam MTL
-for (let materialName in elephantMTL) {
-let material = elephantMTL[materialName];
-console.log("prevmaterial", material)
-material.Kd = applyColorGrading(material.Kd, colorGrading);
-console.log("aftermaterial", material)
-}
-
-
-// Render ke canvas
-renderToCanvas(vertices2d, faces, ctx, elephantMTL);
-
-console.log("object should be drawn");
-}
-drawCanvas()
 </script>
